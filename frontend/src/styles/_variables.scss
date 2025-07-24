@@ -1,0 +1,34 @@
+@use "sass:color";
+// === CSS Custom Properties (runtime accessible) ===
+:root {
+  // Brand colors
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --success: #10b981;
+  --success-hover: #059669;
+  --error: #ef4444;
+  --error-hover: #dc2626;
+
+  // Text & background
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+  --bg-dark: #111827;
+  --bg-light: #1f2937;
+  --border-gray: #374151;
+}
+
+// === SCSS Variables (for compile-time operations) ===
+$accent: #3b82f6;
+$accent-hover: color.adjust($accent, $lightness: -10%);
+
+$success: #10b981;
+$success-hover: color.adjust($success, $lightness: -10%);
+
+$error: #ef4444;
+$error-hover: color.adjust($error, $lightness: -10%);
+
+$text-main: #f9fafb;
+$text-muted: #9ca3af;
+$bg-dark: #111827;
+$bg-light: #1f2937;
+$border-gray: #374151;
