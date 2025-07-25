@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getOneProduct } from '../../api/productService';
 import '/src/styles/main.scss';
-
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 /**
  * ProductDetail Component
  * Displays detailed information about a single product.
@@ -50,7 +50,7 @@ function ProductDetail() {
 
   // Construct the full image URL if one exists
  const imageUrl = product.picture
-  ? `http://ihsanerdemunal.ide.3wa.io:9500/uploads/products/${product.picture}`
+  ? `${BASE_URL}/uploads/products/${product.picture}`
   : null;
 
 

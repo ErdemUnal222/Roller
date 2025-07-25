@@ -1,5 +1,4 @@
 // ------------------- SERVER ENTRY POINT -------------------
-
 if (process.env.NODE_ENV !== 'production') {
   console.log("Server starting...");
 }
@@ -20,21 +19,31 @@ dotenv.config();
 // ------------------- APP INIT -------------------
 const app = express();
 
-// Define allowed frontend origin
-const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-if (process.env.NODE_ENV !== 'production') {
-  console.log("CORS allowed origin:", frontendUrl);
-}
 // ------------------- CORS SETUP -------------------
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:3000"
+];
+
 const corsOptions = {
-  origin: frontendUrl,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Handles preflight requests
+app.options('*', cors(corsOptions)); // Handle preflight
+
+if (process.env.NODE_ENV !== 'production') {
+  console.log("Allowed CORS origins:", allowedOrigins);
+}
 
 // ------------------- MIDDLEWARE -------------------
 app.use(fileUpload({ createParentPath: true }));
@@ -61,9 +70,12 @@ mysql.createConnection({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE
 }).then((db) => {
-if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     console.log("Connected to MySQL database.");
-  }  setInterval(() => db.query('SELECT 1'), 10000); // keep-alive
+  }
+
+  // Keep-alive
+  setInterval(() => db.query('SELECT 1'), 10000);
 
   // ------------------- ROUTES -------------------
   app.get('/', (req, res) => {
@@ -90,16 +102,18 @@ if (process.env.NODE_ENV !== 'production') {
 
   const PORT = process.env.PORT || 9500;
   app.listen(PORT, () => {
-if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       console.log(`Server running on port ${PORT}`);
-    }  });
+    }
+  });
 
 }).catch((err) => {
   console.error("Database connection failed:", err);
 
   app.use('*', (req, res) => {
-if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       console.warn("No matching route:", req.method, req.originalUrl);
-    }    res.status(404).json({ message: "Route not found", path: req.originalUrl });
+    }
+    res.status(404).json({ message: "Route not found", path: req.originalUrl });
   });
 });

@@ -1,60 +1,41 @@
-// Import necessary modules
-import React from 'react';
-import { Link } from 'react-router-dom'; // Used for internal navigation
-import '/src/styles/main.scss'; // Import global styles
+import { Link } from 'react-router-dom';
+import '../../styles/_home.scss';
 
-/**
- * Home Component
- * This is the landing page of the application.
- * It welcomes users and introduces them to the core features of the Roller Derby Hub.
- */
-function Home() {
+export default function Home() {
   return (
-    <div className="home-page">
-      {/* Hero Section - Acts as the visual introduction at the top of the page */}
-      <section className="home-hero" role="banner" aria-labelledby="home-title">
-        {/* Main heading for the page */}
-        <h1 id="home-title" className="home-title">
-          Welcome to the Roller Derby Hub
-        </h1>
-
-        {/* Subtitle describing the purpose of the platform */}
+    <main className="home-page">
+      {/* Hero Section */}
+      <section className="home-hero">
+        <h1 className="home-title">Roll with the Best</h1>
         <p className="home-subtitle">
-          Discover, join, and organize dynamic roller derby events throughout the country.
+          Connect with derby players, discover events, and shop exclusive gear.
         </p>
-
-        {/* Call-to-action button that navigates to the events page */}
-        <Link
-          to="/events"
-          className="home-cta-button"
-          aria-label="Browse upcoming roller derby events"
-        >
-          Explore Events
-        </Link>
+        <Link to="/events" className="home-cta-button">Browse Events</Link>
       </section>
 
-      {/* Why Join Section - Highlights key benefits of the platform */}
-      <section className="home-section" aria-labelledby="why-join-title">
-        <h2 id="why-join-title" className="section-title">Why Join Us?</h2>
-
-        {/* Benefit Cards - Each card outlines one feature or advantage */}
+      {/* Platform Features Section */}
+      <section className="home-section">
+        <h2 className="section-title">Explore the Platform</h2>
         <div className="benefits-cards">
           <div className="benefit-card">
-            <span className="icon" aria-hidden="true">•</span>
-            <p>Browse and register for nearby matches and tournaments.</p>
+            <span className="icon">📅</span>
+            <p>Find and register for upcoming roller derby matches and community events.</p>
           </div>
           <div className="benefit-card">
-            <span className="icon" aria-hidden="true">•</span>
-            <p>Create, promote, and manage your own roller derby events with ease.</p>
+            <span className="icon">🛍️</span>
+            <p>Visit our shop for exclusive derby merchandise and essential gear.</p>
           </div>
           <div className="benefit-card">
-            <span className="icon" aria-hidden="true">•</span>
-            <p>Connect with fellow players, clubs, and organizers in the derby community.</p>
+            <span className="icon">💬</span>
+            <p>Connect with clubs, players, and event organizers directly on the platform.</p>
           </div>
         </div>
+
+        <div className="home-links">
+          <Link to="/events" className="home-cta-button">Explore Events</Link>
+          <Link to="/shop" className="home-cta-button">Visit Shop</Link>
+        </div>
       </section>
-    </div>
+    </main>
   );
 }
-
-export default Home;

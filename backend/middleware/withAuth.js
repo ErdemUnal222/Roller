@@ -17,11 +17,10 @@ module.exports = (req, res, next) => {
   try {
     // Use JWT to verify and decode the token using the secret key from .env
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-       // Optionally log the decoded payload in non-production environments
+    // Optionally log the decoded payload in non-production environments
     if (process.env.NODE_ENV !== 'production') {
-if (process.env.NODE_ENV !== 'production') {
-  console.log("🧩 withAuth: Token decoded", decoded); // <== log decoded payload
-}    }
+console.log('🧩 withAuth: Token decoded', decoded);
+    }
 
 
     // Attach the decoded user payload to the request object so we can use it later in controllers

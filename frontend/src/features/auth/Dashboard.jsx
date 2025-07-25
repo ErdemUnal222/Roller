@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import "/src/styles/main.scss";
-
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 /**
  * Admin Dashboard Component
  * This is the main admin interface for managing user accounts.
@@ -27,8 +27,7 @@ function Dashboard() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://ihsanerdemunal.ide.3wa.io:9500/api/v1/users", {
-          headers: {
+        const res = await fetch(`${BASE_URL}/api/v1/users`, {          headers: {
             Authorization: `Bearer ${token}`,
           },
         });
@@ -69,8 +68,7 @@ if (data.result) {
     e.preventDefault();
 
     try {
-      const res = await fetch(`http://ihsanerdemunal.ide.3wa.io:9500/api/v1/users/${editingUserId}`, {
-        method: "PATCH",
+      const res = await fetch(`${BASE_URL}/api/v1/users/${editingUserId}`, {        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,

@@ -8,6 +8,6 @@ The application expects an API base URL to be provided. Create a `.env` file at 
 
 ```
 VITE_API_BASE_URL=http://localhost:9500/api/v1
+VITE_SERVER_BASE_URL=http://localhost:9500
 ```
-
-Adjust the value according to your backend location. Vite will expose this variable to the client code as `import.meta.env.VITE_API_BASE_URL`.
+Adjust the values according to your backend location. Vite will expose these variables to the client code as `import.meta.env.VITE_API_BASE_URL` and `import.meta.env.VITE_SERVER_BASE_URL`.

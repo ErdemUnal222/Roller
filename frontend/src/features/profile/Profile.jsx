@@ -4,6 +4,8 @@ import { setUser } from '../../redux/userSlice';
 import api from '../../api/axios';
 import '/src/styles/main.scss';
 
+
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 /**
  * Profile Component
  * This component allows the logged-in user to:
@@ -130,8 +132,7 @@ const Profile = () => {
       {profile.picture && (
         <div className="profile-image-wrapper">
           <img
-            src={`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${profile.picture}?t=${Date.now()}`}
-            alt="Profile"
+            src={`${BASE_URL}/uploads/${profile.picture}?t=${Date.now()}`}            alt="Profile"
             className="profile-image"
           />
         </div>

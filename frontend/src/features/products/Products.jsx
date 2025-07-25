@@ -3,7 +3,7 @@ import { getAllProducts, createProduct, deleteProduct } from '../../api/productS
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import '/src/styles/main.scss';
-
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 /**
  * Products (Admin View)
  * This component allows administrators to view, manage, and delete products.
@@ -111,7 +111,7 @@ function Products() {
                 {/* Product image preview */}
                 {product.picture && (
                  <img
-                  src={`http://ihsanerdemunal.ide.3wa.io:9500/uploads/products/${product.picture}`}
+                  src={`${BASE_URL}/uploads/products/${product.picture}`}
                   alt={product.alt || 'Product'}
                   className="admin-product-thumbnail"
                   style={{ width: '60px', height: '60px', objectFit: 'cover' }}

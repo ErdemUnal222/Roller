@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint ."  },
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint ."
+  },
   "author": "Erdem ünal",
   "license": "ISC",
   "dependencies": {
@@ -19,6 +20,7 @@
     "express": "^4.21.2",
     "express-fileupload": "^1.5.1",
     "jsonwebtoken": "^9.0.2",
+    "ngrok": "^5.0.0-beta.2",
     "promise-mysql": "^5.2.0",
     "stripe": "^17.7.0",
     "tree": "^0.1.3"

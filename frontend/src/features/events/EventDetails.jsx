@@ -6,6 +6,7 @@ import api from '../../api/axios'; // Axios instance with predefined settings
 import Comments from '../comments/Comments'; // Comment section component
 import "/src/styles/main.scss"; // Global SCSS styles
 
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 /**
  * EventDetails Component
  * This component displays a detailed view of a single event.
@@ -138,7 +139,7 @@ if (!isAdmin) {
       {/* Event image, if available */}
       {event.picture && (
         <img
-          src={`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${event.picture}`}
+          src={`${BASE_URL}/uploads/${event.picture}`}
           alt={event.alt || event.title}
           className="event-image"
         />

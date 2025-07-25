@@ -36,3 +36,12 @@ More routes are available for managing products, events, comments, messages and 
 
 Copy `.env.example` to `.env` and fill in the values for your setup.
 See `.env.example` for all required variables. At a minimum you need MySQL credentials, JWT and Stripe secrets, and the frontend URL allowed for CORS.
+
+Key variables include:
+
+- `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE` – MySQL connection
+- `JWT_SECRET` – secret used to sign tokens
+- `STRIPE_SECRET` – Stripe API key
+- `STRIPE_WEBHOOK_SECRET` – Stripe webhook signing secret
+- `FRONTEND_URL` – origin allowed for CORS
+- `PORT` *(optional)* – API server port

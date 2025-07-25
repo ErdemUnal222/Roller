@@ -1,4 +1,6 @@
 const stripe = require("../config/stripe"); // Stripe instance with API key
+// Base URL for generating success and cancel links
+const BASE_URL = process.env.BASE_URL || 'http://localhost:9500';
 
 module.exports = (OrderModel, OrderDetailsModel, ProductModel) => {  // Added ProductModel here
 
@@ -95,8 +97,8 @@ if (process.env.NODE_ENV !== 'production') {
         mode: 'payment',
         line_items: lineItems,
         metadata: { orderId: orderId.toString() },
-        success_url: 'http://ihsanerdemunal.ide.3wa.io:9500/success?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url: 'http://ihsanerdemunal.ide.3wa.io:9500/cancel',
+        success_url: `${BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${BASE_URL}/cancel`,
       });
 
       res.status(201).json({

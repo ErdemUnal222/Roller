@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import '../../styles/main.scss';
 
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 /**
  * EditProduct Component
  * Allows an admin to edit an existing product's details and optionally update the product image.
@@ -42,8 +43,7 @@ useEffect(() => {
       if (result) {
         setProduct(result); // Fill form with existing product data
         if (result.picture) {
-          setPreviewUrl(`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${result.picture}`);
-        }
+          setPreviewUrl(`${BASE_URL}/uploads/${result.picture}`);        }
       }
     } catch (error) {
       console.error('Error fetching product:', error);
