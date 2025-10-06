@@ -1,0 +1,86 @@
+/* /src/styles/_buttons.scss */
+@use './variables' as *;
+
+/* Base */
+.button {
+  --btn-bg: var(--card-2);
+  --btn-fg: var(--text);
+  --btn-bd: var(--border);
+
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+
+  font: 600 0.95rem/1 var(--font-ui, system-ui);
+  padding: .65rem 1rem;
+  border-radius: var(--radius-md, .75rem);
+  border: 1px solid var(--btn-bd);
+  color: var(--btn-fg);
+  background: var(--btn-bg);
+  cursor: pointer;
+  transition: filter .15s ease, transform .02s ease, background-color .2s ease;
+
+  &:hover { filter: brightness(1.05); }
+  &:active { transform: translateY(1px); }
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring, 0 0 0 3px rgba(59,130,246,.25));
+  }
+}
+
+/* Variants */
+.button--primary {
+  --btn-bg: var(--accent);
+  --btn-fg: var(--accent-contrast);
+  --btn-bd: transparent;
+}
+
+.button--danger {
+  --btn-bg: var(--danger);
+  --btn-fg: var(--accent-contrast);
+  --btn-bd: transparent;
+}
+
+.button--accent {
+  --btn-bg: var(--accent);
+  --btn-fg: var(--accent-contrast);
+  --btn-bd: transparent;
+}
+
+.button--ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--text);
+  --btn-bd: var(--border);   // use border so it’s visible
+
+  &:hover {
+    background: var(--card-2);
+    color: var(--text);
+    border-color: var(--accent);  // subtle highlight on hover
+  }
+}
+
+
+/* Disabled */
+.button[disabled],
+.button[aria-disabled="true"] {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* Loading spinner */
+.button[data-loading="true"] {
+  pointer-events: none;
+  position: relative;
+}
+.button[data-loading="true"]::after {
+  content: '';
+  inline-size: .9em; block-size: .9em;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  display: inline-block;
+  animation: spin .75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

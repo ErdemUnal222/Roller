@@ -139,7 +139,7 @@ function Comments() {
           aria-label="New comment"
           required
         />
-        <button type="submit" className="comment-button">Post Comment</button>
+        <button type="submit" className="button button--primary">Post Comment</button>
       </form>
 
       {/* List all existing comments */}
@@ -159,16 +159,16 @@ function Comments() {
                     aria-label="Edit comment"
                   />
                   <div className="comment-actions">
-                    <button className="comment-save" onClick={() => handleEditSave(comment.id)}>Save</button>
-                    <button className="comment-cancel" onClick={handleEditCancel}>Cancel</button>
+                    <button className="button button--primary" onClick={() => handleEditSave(comment.id)}>Save</button>
+                    <button className="button button--ghost" onClick={handleEditCancel}>Cancel</button>
                   </div>
                 </>
               ) : (
                 <>
                   <p className="comment-content">{comment.content}</p>
                   <div className="comment-actions">
-                    <button className="comment-edit" onClick={() => handleEdit(comment)}>Edit</button>
-                    <button className="comment-delete" onClick={() => handleDelete(comment.id)}>Delete</button>
+                    <button className="button button--ghost" onClick={() => handleEdit(comment)}>Edit</button>
+                    <button className="button button--danger" onClick={() => handleDelete(comment.id)}>Delete</button>
                   </div>
                 </>
               )}

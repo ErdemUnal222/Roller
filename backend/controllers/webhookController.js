@@ -1,50 +1,53 @@
 const Stripe = require('stripe');
-const stripe = Stripe(process.env.STRIPE_SECRET); // Initialize Stripe with secret key
+
+const stripeSecret = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET; // support both names
+if (!stripeSecret) {
+  throw new Error('STRIPE_SECRET_KEY is not defined');
+}
+const stripe = Stripe(stripeSecret);
 
 module.exports = (OrderModel) => {
-
-  // HANDLE Stripe webhook for completed payment
+  // POST /api/v1/webhook/stripe
   const handleStripeWebhook = async (req, res, next) => {
-    const sig = req.headers['stripe-signature']; // Stripe sends a unique signature with every webhook
+    const sig = req.headers['stripe-signature'];
+    if (!sig) return res.status(400).send('Missing Stripe-Signature');
 
     let event;
-
     try {
-      // Stripe requires verifying the event's authenticity using the raw request body and the signature
+      // IMPORTANT: req.body is a Buffer (because of bodyParser.raw in server.js)
       event = stripe.webhooks.constructEvent(
-        req.rawBody, // Raw body must be provided by middleware (important for verification)
+        req.body,
         sig,
-        process.env.STRIPE_WEBHOOK_SECRET // Secret set in Stripe dashboard
+        process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err) {
-      // If verification fails, the webhook is invalid (could be tampered)
-      return next({ status: 400, message: `Webhook Error: ${err.message}` });
+      // Bad signature -> reject
+      return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // When payment is successfully completed, Stripe emits this event
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
-
-      // We saved our internal order ID in Stripe metadata during checkout
-      const orderId = session.metadata && session.metadata.orderId;
-
-      if (orderId) {
-        try {
-          // Update the order status in our own database
-          await OrderModel.updateStatus(orderId, 'paid');
-        } catch (err) {
-          // If DB update fails, we still acknowledge Stripe to avoid retries
-          return next({ status: 500, message: `Failed to update order #${orderId} status` });
+    try {
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        // prefer metadata.orderId; fallback to client_reference_id if you used it
+        const orderId = session?.metadata?.orderId || session?.client_reference_id;
+        if (orderId) {
+          try {
+            await OrderModel.updateStatus(orderId, 'paid');
+          } catch (dbErr) {
+            // Log but ACK to avoid Stripe retries; reconcile later
+            console.error(`Failed to update order #${orderId}:`, dbErr?.message || dbErr);
+          }
         }
       }
+      // handle other event types if needed...
+    } catch (err) {
+      // Any unexpected handler error: log but still ACK
+      console.error('Webhook handler error:', err?.message || err);
     }
 
-    // Respond 200 OK no matter what — required by Stripe to stop resending the event
-    res.status(200).json({ received: true });
+    // Always ACK 200 so Stripe doesn’t retry endlessly
+    return res.status(200).json({ received: true });
   };
 
-  // Export the webhook handler so it can be used in routes
-  return {
-    handleStripeWebhook
-  };
+  return { handleStripeWebhook };
 };

@@ -46,6 +46,7 @@ module.exports = (parentRouter, db) => {
 
   // Delete a product by its ID
   router.delete('/products/:id', withAuthAdmin, productController.deleteProduct);
+  
 
   // Attach this router to the parent router
   parentRouter.use('/', router);

@@ -1,100 +1,183 @@
 @use './variables' as *;
 
-.profile-container {
-  max-width: 600px;
+.profile-card {
+  --pad: clamp(1rem, 2.2vw, 1.25rem);
+  max-width: 760px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: var(--pad);
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
 }
 
-.profile-title {
-  text-align: center;
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 1.5rem;
+/* Header */
+.profile-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .9rem;
+  align-items: center;
+  margin-bottom: .75rem;
 }
 
-.profile-message {
+.avatar-wrap {
+  inline-size: 104px;
+  block-size: 104px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 3px solid var(--border);
+  background: var(--card-2);
+  display: grid;
+  place-items: center;
+}
+
+.avatar {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+
+  &.placeholder {
+    font: 800 1.75rem/1 var(--font-ui, system-ui);
+    color: var(--text);
+  }
+}
+
+.head-info .title {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(1.15rem, 2.3vw, 1.5rem);
+}
+.head-info .subtitle {
+  margin: .15rem 0 0;
+  color: var(--text-muted);
+  font-size: .95rem;
+}
+
+/* Banner messages */
+.profile-banner {
+  margin: .6rem 0 .2rem;
+  padding: .65rem .8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--text);
   text-align: center;
-  margin-bottom: 1rem;
-  color: #16a34a;
 
   &.error {
-    color: #dc2626;
+    border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+    background: color-mix(in srgb, var(--danger) 10%, var(--card-2));
+  }
+  &.success {
+    border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+    background: color-mix(in srgb, var(--success) 10%, var(--card-2));
   }
 }
 
-.profile-image-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
+/* Body */
+.profile-body {
+  margin-top: .5rem;
 }
 
-.profile-image {
-  width: 130px;
-  height: 130px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 4px solid #d1d5db;
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+
+  .field {
+    display: grid;
+    gap: .35rem;
+
+    &.wide { grid-column: 1 / -1; }
+
+    label {
+      font-weight: 700;
+      font-size: .9rem;
+      color: var(--text);
+    }
+    input, textarea {
+      padding: .65rem .8rem;
+      background: var(--input-bg);
+      color: var(--input-text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+
+      &:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
+      }
+    }
+  }
 }
 
-.profile-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1rem;
+.upload {
+  margin-top: .5rem;
+  display: grid;
+  gap: .35rem;
+
+  label {
+    font-weight: 700;
+    color: var(--text);
+  }
+  input[type="file"] {
+    color: var(--text);
+  }
 }
 
-.profile-form input {
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  border: 1px solid #d1d5db;
-  width: 100%;
+/* Read-only layout */
+.readout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem 1rem;
+
+  > div { color: var(--text); }
+  strong { color: var(--text); }
 }
 
-.profile-details p {
-  margin-bottom: 0.5rem;
-}
-
+/* Footer actions */
 .profile-actions {
+  margin-top: 1rem;
   display: flex;
-  justify-content: center;
-  margin-top: 2rem;
+  gap: .6rem;
+  justify-content: flex-end;
 }
 
-.btn {
-  padding: 0.5rem 1.5rem;
-  font-weight: bold;
-  border-radius: 0.375rem;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-  color: white;
+/* Skeletons */
+.profile-card.skeleton {
+  display: grid;
+  gap: .6rem;
 
-  &.btn-blue {
-    background-color: #2563eb;
-
-    &:hover {
-      background-color: #1d4ed8;
-    }
+  .sk-avatar {
+    width: 104px;
+    height: 104px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--card-2), color-mix(in srgb, var(--card-2) 70%, var(--text) 10%), var(--card-2));
+    background-size: 200% 100%;
+    animation: prof-shimmer 1.3s linear infinite;
   }
-
-  &.btn-green {
-    background-color: #16a34a;
-
-    &:hover {
-      background-color: #15803d;
-    }
+  .sk-line {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--card-2), color-mix(in srgb, var(--card-2) 70%, var(--text) 10%), var(--card-2));
+    background-size: 200% 100%;
+    animation: prof-shimmer 1.3s linear infinite;
+    &.w-80 { width: 80%; }
+    &.w-60 { width: 60%; }
+    &.w-40 { width: 40%; }
   }
 }
 
-.profile-file-input {
-  margin-bottom: 1rem;
+@keyframes prof-shimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: -200% 0; }
 }
 
+/* (Optional) small avatar in navbar can use tokens too */
 .navbar-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #fff;
+  border: 2px solid var(--border);
 }

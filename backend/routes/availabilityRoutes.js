@@ -1,49 +1,54 @@
 const express = require('express');
 const router = express.Router();
 
-// Import middleware to restrict certain routes to admin users only
-const withAuthAdmin = require('../middleware/withAuthAdmin'); 
 const withAuth = require('../middleware/withAuth');
+const withAuthAdmin = require('../middleware/withAuthAdmin');
 
-/**
- * Define availability-related routes and inject the database dependency.
- */
 module.exports = (parentRouter, db) => {
-  // Load the Availability model by injecting the database connection
+  // DI: model + controller
   const AvailabilityModel = require('../models/AvailabilityModel')(db);
-
-  // Load the Availability controller, passing the model as dependency
   const availabilityController = require('../controllers/availabilityController')(AvailabilityModel);
 
-  // --- ADMIN-ONLY ROUTES (Require authentication and admin role) ---
+  // -------- Param validation (fail fast) --------
+  router.param('id', (req, res, next, val) => {
+    const n = Number(val);
+    if (!Number.isInteger(n) || n <= 0) {
+      return res.status(400).json({ status: 400, message: 'Invalid availability id.' });
+    }
+    req.params.id = n;
+    next();
+  });
 
-  /**
-   * GET /availabilities
-   * - Admin route to fetch all availability entries in the system
-   */
-  router.get('/availabilities', withAuthAdmin, availabilityController.getAllAvailabilities);  /**
-   * GET /availabilities/user/:userId
-   * - Admin route to view all availabilities linked to a specific user
-   */
-  router.get('/availabilities/user/:userId', withAuthAdmin, availabilityController.getAvailabilitiesByUser);
+  router.param('userId', (req, res, next, val) => {
+    const n = Number(val);
+    if (!Number.isInteger(n) || n <= 0) {
+      return res.status(400).json({ status: 400, message: 'Invalid user id.' });
+    }
+    req.params.userId = n;
+    next();
+  });
 
-  // --- AUTHENTICATED USER ROUTES (accessible to normal logged-in users via frontend) ---
+  // -----------------------------
+  // Admin routes (must be authed + admin)
+  // -----------------------------
+  router.get('/availabilities', withAuth, withAuthAdmin, availabilityController.getAllAvailabilities);
+  router.get('/availabilities/user/:userId', withAuth, withAuthAdmin, availabilityController.getAvailabilitiesByUser);
 
-  /**
-   * POST /availabilities
-   * - Allows a logged-in user to declare a new availability period
-   */
+  // -----------------------------------
+  // Authenticated user routes
+  // -----------------------------------
+  router.get('/availabilities/me', withAuth, availabilityController.getMyAvailabilities);
   router.post('/availabilities', withAuth, availabilityController.createAvailability);
-  /**
-   * PUT /availabilities/:id
-   * - Allows a user to modify their own availability entry by ID
-   */
-router.put('/availabilities/:id', withAuth, availabilityController.updateAvailability);
-  /**
-   * DELETE /availabilities/:id
-   * - Allows a user to delete one of their availability entries
-   */
-router.delete('/availabilities/:id', withAuth, availabilityController.deleteAvailability);
-  // Attach this sub-router to the main application router
+  router.put('/availabilities/:id', withAuth, availabilityController.updateAvailability);
+  router.delete('/availabilities/:id', withAuth, availabilityController.deleteAvailability);
+
+  // -----------------------------------
+  // Legacy aliases (singular) — optional, avoids 404 from old clients
+  // -----------------------------------
+  router.get('/availability/me', withAuth, availabilityController.getMyAvailabilities);
+  router.post('/availability', withAuth, availabilityController.createAvailability);
+  router.put('/availability/:id', withAuth, availabilityController.updateAvailability);
+  router.delete('/availability/:id', withAuth, availabilityController.deleteAvailability);
+
   parentRouter.use('/', router);
 };

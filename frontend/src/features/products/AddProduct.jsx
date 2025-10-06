@@ -3,85 +3,89 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../../api/axios';
 import '/src/styles/main.scss';
 
-/**
- * AddProduct Component
- * Provides a form for admins to add new products, including text inputs and an image upload.
- */
 function AddProduct() {
-  // State to manage form input values (title, description, price, stock, alt)
-  const [newProduct, setNewProduct] = useState({
+  const navigate = useNavigate();
+
+  // Adjust these to match your backend:
+  const ENDPOINT = '/products/add';       // try '/products' if your route is POST /products
+  const FILE_FIELD = 'picture';             // try 'picture' if your middleware uses upload.single('picture')
+
+  const [form, setForm] = useState({
     title: '',
     description: '',
     price: '',
     stock: '',
     alt: '',
   });
-
-  // State to store the uploaded image file
-  const [image, setImage] = useState(null);
-
-  // State variables for showing error or success messages
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  // State to show loading indicator while submitting
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState('');
   const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState({ type: '', text: '' });
 
-  // Hook to programmatically redirect users
-  const navigate = useNavigate();
-
-  /**
-   * Handle input field changes
-   * Updates the `newProduct` state for text fields
-   */
-  const handleChange = (e) => {
-    setNewProduct({ ...newProduct, [e.target.name]: e.target.value });
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
   };
 
-  /**
-   * Handle file input change
-   * Stores the selected image file in state
-   */
-  const handleFileChange = (e) => {
-    setImage(e.target.files[0]);
+  const onFileChange = (e) => {
+    const f = e.target.files?.[0];
+    setFile(f || null);
+    if (f) setPreview(URL.createObjectURL(f));
+    else setPreview('');
   };
 
-  /**
-   * Handle form submission
-   * Sends form data including the image to the backend using multipart/form-data
-   */
+  const validate = () => {
+    if (!form.title.trim()) return 'Title is required.';
+    if (!form.price || Number(form.price) <= 0) return 'Price must be > 0.';
+    if (!form.stock || Number(form.stock) < 0) return 'Stock must be ≥ 0.';
+    // Optional: enforce image presence
+    // if (!file) return 'Please select an image.';
+    return '';
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent full page reload
+    e.preventDefault();
+    setMsg({ type: '', text: '' });
 
-    // Create a FormData object to hold form fields and the image
-    const formData = new FormData();
-    for (let key in newProduct) {
-      formData.append(key, newProduct[key]); // Add each field to FormData
+    const v = validate();
+    if (v) {
+      setMsg({ type: 'error', text: v });
+      return;
     }
 
-    if (image) {
-      formData.append('picture', image); // Add image file if selected
-    }
+    const fd = new FormData();
+    // Keep keys exactly as your backend expects
+    fd.append('title', form.title.trim());
+    fd.append('description', form.description || '');
+    fd.append('price', String(form.price)); // backend can Number() it
+    fd.append('stock', String(form.stock));
+    fd.append('alt', form.alt || '');
+    if (file) fd.append(FILE_FIELD, file);  // 'image' or 'picture'
 
     try {
       setLoading(true);
-      setError('');
 
-      // Send POST request to create the new product
-      await axios.post('/products/add', formData, {
+      // If you use cookies-based auth, withCredentials is correct.
+      // If you use Bearer tokens, add: headers: { Authorization: `Bearer ${token}` }
+      await axios.post(ENDPOINT, fd, {
+        withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
-        withCredentials: true, // Ensures cookies (e.g., for auth) are sent
       });
 
-      setSuccess('Product created successfully!');
-
-        // Redirect to the admin product list after a short delay
-      setTimeout(() => navigate('/admin/products'), 1000);
+      setMsg({ type: 'success', text: 'Product created successfully!' });
+      // Small delay for UX, then go back to products
+      setTimeout(() => navigate('/admin/products'), 800);
     } catch (err) {
-      console.error('Error creating product:', err);
-      setError('Failed to create product. Please try again.');
+      console.error('Create product failed:', err);
+      // Try to surface server validation messages if present
+      const serverMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.response?.data?.msg ||
+        'Failed to create product. Please try again.';
+      setMsg({ type: 'error', text: serverMsg });
     } finally {
-      setLoading(false); // Stop loading indicator
+      setLoading(false);
     }
   };
 
@@ -89,59 +93,84 @@ function AddProduct() {
     <div className="add-product-container">
       <h2 className="add-product-title">Add New Product</h2>
 
-      {/* Display error or success messages if any */}
-      {error && <div className="form-error">{error}</div>}
-      {success && <div className="form-success">{success}</div>}
+      {msg.text ? (
+        <div className={msg.type === 'error' ? 'form-error' : 'form-success'}>
+          {msg.text}
+        </div>
+      ) : null}
 
-      {/* Form with fields for product info and image */}
       <form onSubmit={handleSubmit} className="add-product-form" encType="multipart/form-data">
         <input
           name="title"
           placeholder="Title"
+          value={form.title}
+          onChange={onChange}
           required
-          onChange={handleChange}
           className="form-input"
         />
         <textarea
           name="description"
           placeholder="Description"
-          onChange={handleChange}
+          value={form.description}
+          onChange={onChange}
           className="form-input"
         />
         <input
           type="number"
           name="price"
           placeholder="Price"
+          value={form.price}
+          onChange={onChange}
+          min="0"
+          step="0.01"
           required
-          onChange={handleChange}
           className="form-input"
         />
         <input
-          type="number"
+          type="number" 
           name="stock"
           placeholder="Stock"
+          value={form.stock}
+          onChange={onChange}
+          min="0"
+          step="1"
           required
-          onChange={handleChange}
           className="form-input"
         />
         <input
           name="alt"
-          placeholder="Alt text"
-          onChange={handleChange}
-          className="form-input"
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
+          placeholder="Alt text" 
+          value={form.alt}
+          onChange={onChange}
           className="form-input"
         />
 
-        {/* Submit button shows loading state if submitting */}
+        <div className="file-input-group">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={onFileChange}
+            className="form-input"
+          />
+          {preview && (
+            <div className="image-preview">
+              <img src={preview} alt="Preview" />
+            </div>
+          )}
+        </div>
+
         <button type="submit" className="form-button" disabled={loading}>
-          {loading ? 'Creating...' : 'Create Product'}
+          {loading ? 'Creating…' : 'Create Product'}
         </button>
       </form>
+
+      {/* Dev helpers (remove in prod) */}
+      <div className="hint">
+        <small>
+          Using <code>{ENDPOINT}</code> with file field <code>{FILE_FIELD}</code>.
+          If your backend uses <code>upload.single('picture')</code>, set <code>FILE_FIELD = 'picture'</code>.
+        </small>
+      </div>
     </div>
   );
 }

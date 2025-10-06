@@ -1,81 +1,155 @@
-// Define a model class to manage all availability-related database interactions
+// backend/models/AvailabilityModel.js
+
 class AvailabilityModel {
   constructor(db) {
-    // Store the database connection instance for use in all methods
-    this.db = db;
+    this.db = db; // MySQL connection/pool (promise-mysql / mysql2)
   }
 
-  // Add a new availability entry linked to a specific user
-  async addAvailability(userId, startDate, endDate, comment = '') {
+  // ---- Core helpers (preferred API) ----------------------------------------
+
+  /**
+   * Create a new availability.
+   * Returns a normalized object: { id, user_id, start_date, end_date, comment }
+   */
+  async create({ userId, startDate, endDate, comment = '' }) {
     try {
-      // Insert a new row into the 'availability' table
-      const result = await this.db.query(
-        'INSERT INTO availability (user_id, start_date, end_date, comment) VALUES (?, ?, ?, ?)',
-        [userId, startDate, endDate, comment]
-      );
-      return result;
+      const sql = `
+        INSERT INTO availability (user_id, start_date, end_date, comment)
+        VALUES (?, ?, ?, ?)
+      `;
+      const result = await this.db.query(sql, [userId, startDate, endDate, comment]);
+      const insertId = result?.insertId ?? result?.[0]?.insertId; // support mysql2/promise
+      return {
+        id: insertId,
+        user_id: userId,
+        start_date: startDate,
+        end_date: endDate,
+        comment: comment || ''
+      };
     } catch (err) {
-      // Log error for debugging and return a custom error object
       console.error("Error adding availability:", err);
-      return { code: 500, message: 'Error adding availability' };
+      throw err;
     }
   }
 
-  // Update an existing availability entry — only allowed if the user owns it
-  async updateAvailability(id, userId, startDate, endDate, comment = '') {
+  /**
+   * Update a slot. If guardUserId is provided, enforces ownership.
+   * Returns the raw result (check .affectedRows).
+   */
+  async update({ id, startDate, endDate, comment = '', guardUserId = null }) {
     try {
-      // Use both the availability ID and user ID to prevent unauthorized edits
-      const result = await this.db.query(
-        'UPDATE availability SET start_date = ?, end_date = ?, comment = ? WHERE id = ? AND user_id = ?',
-        [startDate, endDate, comment, id, userId]
-      );
+      const params = [startDate, endDate, comment, id];
+      let where = `WHERE id = ?`;
+      if (guardUserId != null) {
+        where += ` AND user_id = ?`;
+        params.push(guardUserId);
+      }
+      const sql = `
+        UPDATE availability
+        SET start_date = ?, end_date = ?, comment = ?
+        ${where}
+        LIMIT 1
+      `;
+      const result = await this.db.query(sql, params);
       return result;
     } catch (err) {
       console.error("Error updating availability:", err);
-      return { code: 500, message: 'Error updating availability' };
+      throw err;
     }
   }
 
-  // Delete an availability entry, with user ownership check
-  async deleteAvailability(id, userId) {
+  /**
+   * Delete a slot. If guardUserId is provided, enforces ownership.
+   * Returns the raw result (check .affectedRows).
+   */
+  async remove({ id, guardUserId = null }) {
     try {
-      // Only the user who created the availability can delete it
-      const result = await this.db.query(
-        'DELETE FROM availability WHERE id = ? AND user_id = ?',
-        [id, userId]
-      );
+      const params = [id];
+      let where = `WHERE id = ?`;
+      if (guardUserId != null) {
+        where += ` AND user_id = ?`;
+        params.push(guardUserId);
+      }
+      const sql = `
+        DELETE FROM availability
+        ${where}
+        LIMIT 1
+      `;
+      const result = await this.db.query(sql, params);
       return result;
     } catch (err) {
       console.error("Error deleting availability:", err);
-      return { code: 500, message: 'Error deleting availability' };
+      throw err;
     }
   }
 
-  // Retrieve all availabilities from the table — useful for admins
+  // ---- Queries --------------------------------------------------------------
+
   async getAllAvailabilities() {
     try {
-      const result = await this.db.query('SELECT * FROM availability');
-      return result;
+      const sql = `SELECT * FROM availability ORDER BY start_date ASC, end_date ASC`;
+      const rows = await this.db.query(sql);
+      return rows;
     } catch (err) {
       console.error("Error getting availabilities:", err);
-      return { code: 500, message: 'Error getting availabilities' };
+      throw err;
     }
   }
 
-  // Fetch all availabilities submitted by a specific user
   async getAvailabilitiesByUser(userId) {
     try {
-      const result = await this.db.query(
-        'SELECT * FROM availability WHERE user_id = ?',
-        [userId]
-      );
-      return result;
+      const sql = `
+        SELECT * FROM availability
+        WHERE user_id = ?
+        ORDER BY start_date ASC, end_date ASC
+      `;
+      const rows = await this.db.query(sql, [userId]);
+      return rows;
     } catch (err) {
       console.error("Error getting user availabilities:", err);
-      return { code: 500, message: 'Error getting user availabilities' };
+      throw err;
     }
+  }
+
+  async getOneById(id) {
+    try {
+      const sql = `SELECT * FROM availability WHERE id = ? LIMIT 1`;
+      const rows = await this.db.query(sql, [id]);
+      // support mysql2 (returns [rows]) vs promise-mysql (returns rows)
+      const list = Array.isArray(rows) && Array.isArray(rows[0]) ? rows[0] : rows;
+      return Array.isArray(list) ? list[0] : list;
+    } catch (err) {
+      console.error("Error getting availability by id:", err);
+      throw err;
+    }
+  }
+
+  // ---- Legacy wrappers (keep existing controller calls working) -------------
+
+  // Old: addAvailability(userId, startDate, endDate, comment)
+  async addAvailability(userId, startDate, endDate, comment = '') {
+    return this.create({ userId, startDate, endDate, comment });
+  }
+
+  // Old: updateAvailability(id, userId, startDate, endDate, comment)
+  async updateAvailability(id, userId, startDate, endDate, comment = '') {
+    return this.update({ id, startDate, endDate, comment, guardUserId: userId });
+  }
+
+  // Old: deleteAvailability(id, userId)
+  async deleteAvailability(id, userId) {
+    return this.remove({ id, guardUserId: userId });
+  }
+
+  // Old: deleteByIdForUser(userId, id)
+  async deleteByIdForUser(userId, id) {
+    return this.remove({ id, guardUserId: userId });
+  }
+
+  // Old: deleteByIdAnyUser(id) — admin path
+  async deleteByIdAnyUser(id) {
+    return this.remove({ id, guardUserId: null });
   }
 }
 
-// Export a factory function that returns a new instance of the model
 module.exports = (db) => new AvailabilityModel(db);

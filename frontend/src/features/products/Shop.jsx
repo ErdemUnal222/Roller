@@ -1,55 +1,46 @@
-import { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';            // Step 1: Import useDispatch
+import { useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { getShopProducts } from '../../api/productService';
 import { Link } from 'react-router-dom';
-import { addToCart } from '../../redux/cartSlice';     // Step 2: Import addToCart action
+import { addToCart } from '../../redux/cartSlice';
 import '/src/styles/main.scss';
 
-/**
- * Shop — Public Product Catalog
- * Displays a list of available products for purchase on the public-facing shop page.
- * Allows users to add products directly to their cart.
- */
-function Shop() {
-  // State to store products fetched from the backend
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || '';
+
+function formatPrice(value) {
+  const n = Number(value ?? 0);
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
+}
+
+export default function Shop() {
   const [products, setProducts] = useState([]);
-
-  // State for error message display
   const [error, setError] = useState('');
-
-  // Loading state to indicate whether data is being fetched
   const [loading, setLoading] = useState(true);
-
-  // Redux dispatch function
   const dispatch = useDispatch();
 
-  /**
-   * Fetch product data from the API when the component mounts.
-   */
   useEffect(() => {
-    async function fetchProducts() {
+    let cancel = false;
+    (async () => {
       try {
-        // API call to fetch products visible in the public shop
+        setLoading(true);
+        setError('');
         const data = await getShopProducts();
-
-        // Only set valid results
-        setProducts(Array.isArray(data.result) ? data.result : []);
+        const list = Array.isArray(data?.result) ? data.result : [];
+        if (!cancel) setProducts(list);
       } catch (err) {
         console.error('Error fetching shop products:', err);
-        setError('Unable to load products. Please try again later.');
+        if (!cancel) setError('Unable to load products. Please try again later.');
       } finally {
-        setLoading(false); // Stop loading indicator
+        if (!cancel) setLoading(false);
       }
-    }
-
-    fetchProducts();
+    })();
+    return () => { cancel = true; };
   }, []);
 
-  /**
-   * Handles adding a product to the cart.
-   * Dispatches the addToCart action with the product as payload.
-   */
+  const placeholders = useMemo(() => Array.from({ length: 8 }), []);
+
   const handleAddToCart = (product) => {
+    if (!product?.stock) return;
     dispatch(addToCart(product));
   };
 
@@ -57,48 +48,86 @@ function Shop() {
     <main className="shop-container">
       <h1 className="shop-title">Shop</h1>
 
-      {/* Loading state */}
-      {loading && <p>Loading products...</p>}
+      {error && (
+        <div className="shop-banner error" role="alert">
+          {error}
+        </div>
+      )}
 
-      {/* Error message */}
-      {error && <p className="form-error">{error}</p>}
+      {loading ? (
+        <div className="product-grid" aria-live="polite" aria-busy="true">
+          {placeholders.map((_, i) => (
+            <div className="shop-product-card skeleton" key={`ph-${i}`}>
+              <div className="img"></div>
+              <div className="line w-70"></div>
+              <div className="line w-40"></div>
+              <div className="btns">
+                <span className="btn shimmer"></span>
+                <span className="btn shimmer"></span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <div className="shop-empty">
+          <p>No products available yet.</p>
+          <Link to="/" className="button button--ghost">Back to home</Link>
+        </div>
+      ) : (
+        <div className="product-grid">
+          {products.map((p) => {
+            const imgSrc = p.picture
+              ? (BASE_URL ? `${BASE_URL}/uploads/products/${p.picture}` : `/uploads/products/${p.picture}`)
+              : null;
+            const isOut = Number(p.stock ?? 0) <= 0;
+            const isLow = !isOut && Number(p.stock) <= 5;
 
-      {/* Grid of product cards */}
-      <div className="product-grid">
-        {products.map((product) => (
-          <div key={product.id} className="shop-product-card">
-            {/* Display product image if available */}
-            {product.picture && (
-              <img
-                src={`/uploads/products/${product.picture}`}
-                alt={product.alt || product.title}
-                className="shop-product-img"
-              />
-            )}
+            return (
+              <article key={p.id} className="shop-product-card" tabIndex={0}>
+                <div className="media">
+                  {imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={p.alt || p.title}
+                      className="shop-product-img"
+                      onError={(e) => (e.currentTarget.style.visibility = 'hidden')}
+                    />
+                  ) : (
+                    <div className="img-fallback" aria-hidden="true" />
+                  )}
 
-            {/* Product title and price */}
-            <h2 className="shop-product-title">{product.title}</h2>
-            <p className="shop-product-price">€{product.price}</p>
+                  {(isOut || isLow) && (
+                    <span className={`badge ${isOut ? 'danger' : 'warn'}`}>
+                      {isOut ? 'Out of stock' : 'Low stock'}
+                    </span>
+                  )}
+                </div>
 
-            {/* Link to product detail page */}
-            <Link to={`/shop/${product.id}`} className="shop-product-link">
-              View Details
-            </Link>
+                <div className="info">
+                  <h2 className="shop-product-title" title={p.title}>{p.title}</h2>
+                  <p className="shop-product-price">{formatPrice(p.price)}</p>
+                </div>
 
-            {/* Add to Cart button */}
-            <button
-              type="button"
-              onClick={() => handleAddToCart(product)}
-              className="shop-add-to-cart-button"
-              aria-label={`Add ${product.title} to cart`}
-            >
-              Add to Cart
-            </button>
-          </div>
-        ))}
-      </div>
+                <div className="actions">
+                  <Link to={`/shop/${p.id}`} className="button button--ghost" aria-label={`View ${p.title}`}>
+                    View details
+                  </Link>
+                  <button
+                    type="button"
+                    className="button button--primary"
+                    onClick={() => handleAddToCart(p)}
+                    disabled={isOut}
+                    aria-disabled={isOut ? 'true' : 'false'}
+                    aria-label={`Add ${p.title} to cart`}
+                  >
+                    Add to cart
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </main>
   );
 }
-
-export default Shop;

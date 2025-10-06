@@ -1,125 +1,141 @@
 // /src/features/events/CreateEvent.jsx
-
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import '/src/styles/main.scss';
 
-/**
- * CreateEvent Component
- * Admin-only form to create a new event including image upload via multipart/form-data.
- */
-function CreateEvent() {
-  // State to manage form inputs
-  const [form, setForm] = useState({
+const CreateEvent = () => {
+  const navigate = useNavigate();
+  const token =
+    useSelector((state) => state.user.token) ||
+    JSON.parse(localStorage.getItem('user') || '{}')?.token;
+
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
     event_date: '',
-    price: '',
     places: '',
-    image: null,
+    price: '',
+    alt: '',
   });
 
-  const navigate = useNavigate(); // Hook to programmatically navigate after form submission
-  const [message, setMessage] = useState(''); // State to show success or error message
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [message, setMessage] = useState('');
 
-  /**
-   * handleChange
-   * Updates form state when user types or selects a file
-   */
+  // Handle text input changes
   const handleChange = (e) => {
-    const { name, value, type } = e.target;
-
-    // If input type is file, store the uploaded file
-    if (type === 'file') {
-      setForm({ ...form, image: e.target.files[0] });
-    } else {
-      // Otherwise update normal input fields
-      setForm({ ...form, [name]: value });
-    }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /**
-   * handleSubmit
-   * Sends form data (including the image) to the backend using FormData.
-   * On success, it redirects the user to the admin events list.
-   */
+  // Handle file input changes
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
+  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage('');
+
+    // Simple validation
+    if (
+      !formData.title ||
+      !formData.description ||
+      !formData.event_date ||
+      !formData.places ||
+      !formData.price
+    ) {
+      setMessage('Please fill in all required fields.');
+      return;
+    }
+    if (!selectedFile) {
+      setMessage('Please select an event image.');
+      return;
+    }
 
     try {
-      const formData = new FormData();
-      // Append each key-value pair to the FormData object
-      for (const key in form) {
-        formData.append(key, form[key]);
-      }
+      // 1) Upload image
+      const imgData = new FormData();
+      imgData.append('image', selectedFile);
 
-      // Send POST request to create the event
-      const uploadRes = await api.post('/events', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const uploadRes = await api.post('/events/upload', imgData, {
+        headers: { Authorization: `Bearer ${token}` }, // interceptor also adds this, but explicit is fine
       });
 
+      const pictureFilename = uploadRes?.data?.filename;
+      if (!pictureFilename) {
+        throw new Error('Upload did not return a filename.');
+      }
+
+      // 2) Create event (JSON body)
+      const res = await api.post(
+        '/events',
+        {
+          ...formData,
+          price: Number(formData.price),
+          places: Number(formData.places),
+          picture: pictureFilename,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Backend returns { eventId }, not result.insertId
+      const newId =
+        res?.data?.eventId ??
+        res?.data?.result?.insertId ??
+        res?.data?.result?.id ??
+        null;
+
       setMessage('Event created successfully!');
-      navigate('/admin/events'); // Redirect to admin event management page
+
+      if (newId) {
+        navigate(`/events/${newId}`);
+      } else {
+        // Fallback: go back to admin list if no id returned
+        navigate('/admin/events');
+      }
     } catch (err) {
-      console.error(' Failed to create event:', err);
-      setMessage('Failed to create event.');
+      console.error('Event creation failed:', err.response?.data || err.message);
+      setMessage(err.response?.data?.message || 'Failed to create event.');
     }
   };
 
   return (
-    <div className="event-create-form" role="main" aria-labelledby="create-event-title">
-      <h2 id="create-event-title">Create New Event</h2>
+    <div className="create-event">
+      <h1>Create Event</h1>
+
       {message && <p className="event-message">{message}</p>}
 
-      {/* Form to create a new event */}
-      <form onSubmit={handleSubmit}>
-        <input
-          name="title"
-          placeholder="Title"
-          onChange={handleChange}
-          value={form.title}
-          required
-        />
-        <textarea
-          name="description"
-          placeholder="Description"
-          onChange={handleChange}
-          value={form.description}
-          required
-        />
-        <input
-          name="event_date"
-          type="date"
-          onChange={handleChange}
-          value={form.event_date}
-          required
-        />
-        <input
-          name="price"
-          type="number"
-          placeholder="Price (€)"
-          onChange={handleChange}
-          value={form.price}
-          required
-        />
-        <input
-          name="places"
-          type="number"
-          placeholder="Available places"
-          onChange={handleChange}
-          value={form.places}
-          required
-        />
-        <input
-          name="image"
-          type="file"
-          accept="image/*"
-          onChange={handleChange}
-        />
-        <button type="submit">Create Event</button>
+      <form onSubmit={handleSubmit} className="event-form">
+        <label>Title*</label>
+        <input type="text" name="title" value={formData.title} onChange={handleChange} />
+
+        <label>Description*</label>
+        <textarea name="description" value={formData.description} onChange={handleChange}></textarea>
+
+        <label>Event Date*</label>
+        <input type="date" name="event_date" value={formData.event_date} onChange={handleChange} />
+
+        <label>Available Places*</label>
+        <input type="number" name="places" value={formData.places} onChange={handleChange} />
+
+        <label>Price (€)*</label>
+        <input type="number" name="price" value={formData.price} onChange={handleChange} />
+
+        <label>Image Alt Text</label>
+        <input type="text" name="alt" value={formData.alt} onChange={handleChange} />
+
+        <label>Event Image*</label>
+        <input type="file" onChange={handleFileChange} accept="image/*" />
+
+        <button type="submit" className="button button--primary">Create Event</button>
       </form>
     </div>
   );
-}
+};
 
 export default CreateEvent;

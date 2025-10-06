@@ -1,4 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
+import { placeOrder } from '/src/redux/orderSlice';
 import { clearCart } from '/src/redux/cartSlice';
 import api from '/src/api/axios';
 import { useState } from 'react';
@@ -70,27 +71,30 @@ function Checkout() {
       const orderPayload = {
         userId: user?.id,
         totalAmount: totalPrice,
+        totalProducts,
         items: cartItems.map(({ id, title, price, quantity }) => ({
-          productId: id,    // Note this key must be productId for backend
+          id,
           name: title,
           price,
           quantity,
         })),
+        billingName,
+        billingAddress,
       };
 
-      // POST order to backend checkout route
-      const response = await api.post('/orders/checkout', orderPayload);
+      // POST order to backend
+      await api.post('/orders', orderPayload);
 
-      if (response.status === 201 && response.data.url) {
-        // Redirect user to Stripe checkout page
-        window.location.href = response.data.url;
-      } else {
-        setError('Failed to start payment process.');
-        setIsProcessing(false);
-      }
+      // Update Redux store and clear cart
+      dispatch(placeOrder(orderPayload));
+      dispatch(clearCart());
+
+      // Navigate to success page
+      navigate('/success', { replace: true });
     } catch (err) {
       console.error('Order submission failed:', err);
       setError('Failed to process order. Please try again.');
+    } finally {
       setIsProcessing(false);
     }
   };

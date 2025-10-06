@@ -9,7 +9,7 @@ export const fetchAllUsers = async () => {
 };
 
 export const deleteUserById = async (id) => {
-  await API.delete(`/users/${id}`);
+  await API.delete(`/admin/user/${id}`);
   return true;
 
 };
@@ -17,7 +17,7 @@ export const deleteUserById = async (id) => {
 // Update user details such as name, email, etc.
 // This is useful for admins who want to edit user information.
 export const updateUser = async (id, body) => {
-  const res = await API.put(`/users/${id}`, body);
+  const res = await API.put(`/admin/user/${id}`, body);
   return res.data.newUser;
 };
 
@@ -39,7 +39,7 @@ export const deleteProduct = async (id) => {
 // Update a product's details.
 // Useful for changing the price, title, stock, or description.
 export const updateProduct = async (id, body) => {
-  const res = await API.put(`/products/${id}`, body);
+  const res = await API.put(`/products/edit/${id}`, body);
   return res.data.updatedProduct;
 };
 
@@ -65,7 +65,7 @@ export const deleteEvent = async (id) => {
 // Retrieve all orders made on the platform.
 // Only admin users can access this route.
 export const fetchAllOrders = async () => {
-  const res = await API.get('/orders');
+  const res = await API.get('/admin/orders');
   return res.data.result || [];
 };
 
@@ -73,6 +73,6 @@ export const fetchAllOrders = async () => {
 // Update the status of an order (e.g., "paid", "shipped", "canceled").
 // Only admins can perform this action.
 export const updateOrderStatus = async (id, status) => {
-  const res = await API.put(`/orders/${id}`, { status });
+  const res = await API.put(`/orders/${id}/status`, { status });
   return res.data.updatedOrder;
 };

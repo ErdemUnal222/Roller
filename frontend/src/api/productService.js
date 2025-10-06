@@ -47,7 +47,7 @@ export const getProductById = async (id, isAdmin = false) => {
  */
 export const createProduct = async (data) => {
   try {
-    const res = await API.post('/products', data); // Fixed path
+    const res = await API.post('/products/add', data);
     return res.data;
   } catch (err) {
     throw err.formattedMessage || "Failed to create product.";
@@ -59,7 +59,7 @@ export const createProduct = async (data) => {
  */
 export const updateProduct = async (id, data) => {
   try {
-    const res = await API.put(`/products/${id}`, data); // Fixed path
+    const res = await API.put(`/products/edit/${id}`, data);
     return res.data;
   } catch (err) {
     throw err.formattedMessage || "Failed to update product.";

@@ -32,7 +32,7 @@ const Cart = () => {
       <div className="cart-empty">
         <h1 className="cart-title">Your Cart</h1>
         <p>Your cart is currently empty.</p>
-        <Link to="/shop" className="cart-link">
+        <Link to="/shop" className="button button--ghost">
           Browse Products →
         </Link>
       </div>
@@ -68,7 +68,7 @@ const Cart = () => {
             <div className="cart-controls">
               {/* Decrease quantity button */}
               <button
-                className="cart-button"
+                className="button button--ghost"
                 onClick={() => dispatch(decrementItem(item.id))}
                 aria-label={`Decrease quantity of ${item.title}`}
               >
@@ -80,7 +80,7 @@ const Cart = () => {
 
               {/* Increase quantity button */}
               <button
-                className="cart-button"
+                className="button button--ghost"
                 onClick={() => dispatch(incrementItem({ id: item.id, stock: item.stock }))}
                 aria-label={`Increase quantity of ${item.title}`}
               >
@@ -89,7 +89,7 @@ const Cart = () => {
 
               {/* Remove item from cart */}
               <button
-                className="cart-remove"
+                className="button button--danger"
                 onClick={() => dispatch(removeItem(item.id))}
                 aria-label={`Remove ${item.title} from cart`}
               >
@@ -105,7 +105,7 @@ const Cart = () => {
         <p className="cart-total">
           Total: <strong>€{total.toFixed(2)}</strong>
         </p>
-        <Link to="/checkout" className="cart-checkout-button">
+        <Link to="/checkout" className="button button--primary">
           Proceed to Checkout →
         </Link>
       </section>

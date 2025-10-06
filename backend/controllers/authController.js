@@ -1,180 +1,227 @@
-const bcrypt = require("bcryptjs");            // Used to hash passwords securely
-const jwt = require("jsonwebtoken");           // Used to generate JWT tokens for user authentication
-const dotenv = require("dotenv");              // Loads environment variables from .env file
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
 dotenv.config();
 
 module.exports = (UserModel) => {
-    
-    // Registers a new user
-    const saveUser = async (req, res, next) => {
-        try {
-            const { firstName, lastName, email, password, address, zip, city } = req.body;
+  // --- tiny helpers ---
+  const isEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || "").trim());
+  const norm = (s) => String(s || "").trim();
+  const safeStr = (s) => norm(s).length > 0;
 
-            // Ensure all required fields are provided
-            if (!firstName || !lastName || !email || !password || !address || !zip || !city) {
-                return next({ status: 400, message: "All required fields must be filled out." });
-            }
+  const ensureJwtSecret = () => {
+    if (!process.env.JWT_SECRET) {
+      // Fail fast in dev; in prod you’d log and 500
+      throw new Error("JWT_SECRET is not set");
+    }
+    return process.env.JWT_SECRET;
+  };
 
-            // Check if the email is already registered
-            const existing = await UserModel.getUserByEmail(email);
-            if (existing.code) {
-                return next({ status: 500, message: "Error while checking email." });
-            }
-            if (existing.length > 0) {
-                return next({ status: 409, message: "Email already in use." });
-            }
-            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-            if (!passwordRegex.test(req.body.password)) {
-              return next({
-                status: 400,
-                message: "Password must be at least 8 characters long and include uppercase, lowercase, and a number.",
-              });
-            }
+  // POST /auth/register
+  const saveUser = async (req, res, next) => {
+    try {
+      const body = req.body || {};
+      const firstName = norm(body.firstName);
+      const lastName  = norm(body.lastName);
+      const email     = norm(body.email).toLowerCase();
+      const password  = String(body.password || "");
+      const address   = norm(body.address);
+      const zip       = norm(body.zip);
+      const city      = norm(body.city);
+      const phone     = norm(body.phone || "");
 
-            // Hash the password before storing it in the database
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const userData = { ...req.body, password: hashedPassword };
+      // required fields
+      if (![firstName, lastName, email, address, zip, city].every(safeStr) || !safeStr(password)) {
+        return next({ status: 400, message: "All required fields must be filled out." });
+      }
 
-            // Save the new user to the database
-            const user = await UserModel.saveOneUser(userData);
-            if (user.code) {
-                return next({ status: 500, message: "Error while saving user." });
-            }
+      // validate email + password policy
+      if (!isEmail(email)) {
+        return next({ status: 400, message: "Invalid email." });
+      }
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        return next({
+          status: 400,
+          message: "Password must be at least 8 chars with upper, lower and a number."
+        });
+      }
 
-            res.status(201).json({ status: 201, msg: "User registered successfully!" });
-        } catch (err) {
-            next(err);
+      // enforce role = 'user' (prevent role injection)
+      const role = "user";
+
+      // unique email
+      const existing = await UserModel.getUserByEmail(email);
+      if (existing?.code) return next({ status: 500, message: "Error while checking email." });
+      if (Array.isArray(existing) && existing.length > 0) {
+        return next({ status: 409, message: "Email already in use." });
+      }
+
+      // hash
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // whitelist insert
+      const userData = {
+        firstName, lastName, email,
+        password: hashedPassword,
+        address, zip, city, phone,
+        role
+      };
+
+      const created = await UserModel.saveOneUser(userData);
+      if (created?.code) return next({ status: 500, message: "Error while saving user." });
+
+      return res.status(201).json({ status: 201, msg: "User registered successfully!" });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  // POST /auth/login
+  const connectUser = async (req, res, next) => {
+    try {
+      const email = norm(req.body?.email).toLowerCase();
+      const password = String(req.body?.password || "");
+
+      if (!isEmail(email) || !safeStr(password)) {
+        return next({ status: 400, message: "Invalid email or password." });
+      }
+
+      const found = await UserModel.getUserByEmail(email);
+      if (found?.code) return next({ status: 500, message: "Error checking email." });
+      if (!Array.isArray(found) || found.length === 0) {
+        // do not reveal which part is wrong
+        return next({ status: 401, message: "Invalid email or password." });
+      }
+
+      const row = found[0];
+      const ok = await bcrypt.compare(password, row.password);
+      if (!ok) return next({ status: 401, message: "Invalid email or password." });
+
+      const secret = ensureJwtSecret();
+      const payload = { id: row.id, role: row.role };
+      const token = jwt.sign(payload, secret, { expiresIn: "1h" });
+
+      // update last login (best-effort)
+      const up = await UserModel.updateConnexion(row.id);
+      if (up?.code) return next({ status: 500, message: "Error updating connection." });
+
+      const user = {
+        id: row.id,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        email: row.email,
+        address: row.address,
+        complement: row.complement,
+        zip: row.zip,
+        city: row.city,
+        phone: row.phone,
+        role: row.role
+      };
+
+      return res.status(200).json({ status: 200, token, user });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  // PUT /users/:id  (owner or admin only)
+  const updateUser = async (req, res, next) => {
+    try {
+      const auth = req.user; // must be set by your JWT middleware
+      const targetId = Number(req.params.id);
+      if (!auth) return next({ status: 401, message: "Unauthorized" });
+      if (!(auth.id === targetId || auth.role === "admin")) {
+        return next({ status: 403, message: "Forbidden" });
+      }
+
+      // whitelist editable fields
+      const allowed = ["firstName","lastName","address","zip","city","phone"];
+      const patch = {};
+      for (const k of allowed) {
+        if (k in req.body && safeStr(req.body[k])) {
+          patch[k] = norm(req.body[k]);
         }
-    };
+      }
+      if (!Object.keys(patch).length) {
+        return next({ status: 400, message: "Nothing to update." });
+      }
 
-    // Authenticates a user and returns a JWT token
-    const connectUser = async (req, res, next) => {
-        try {
-            const { email, password } = req.body;
+      const upd = await UserModel.updateUser(patch, targetId);
+      if (upd?.code) return next({ status: 500, message: "Error updating user!" });
 
-            // Check that credentials are provided
-            if (!email || !password) {
-                return next({ status: 400, message: "Email and password are required." });
-            }
+      const fresh = await UserModel.getOneUser(targetId);
+      if (fresh?.code || !Array.isArray(fresh) || fresh.length === 0) {
+        return next({ status: 404, message: "Updated user not found!" });
+      }
 
-            // Look up user by email
-            const check = await UserModel.getUserByEmail(email);
-            if (check.code) return next({ status: 500, message: "Error checking email." });
-            if (check.length === 0) return next({ status: 404, message: "User not found." });
+      const u = fresh[0];
+      const myUser = {
+        id: u.id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        address: u.address,
+        zip: u.zip,
+        city: u.city,
+        phone: u.phone,
+        role: u.role
+      };
 
-            // Compare entered password with hashed password in DB
-            const isValid = await bcrypt.compare(password, check[0].password);
-            if (!isValid) return next({ status: 401, message: "Invalid email or password." });
+      return res.status(200).json({ status: 200, newUser: myUser });
+    } catch (err) {
+      next(err);
+    }
+  };
 
-            // Create JWT payload and sign token
-            const payload = { id: check[0].id, role: check[0].role };
-            const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
-            // Update last login timestamp
-            const update = await UserModel.updateConnexion(check[0].id);
-            if (update.code) return next({ status: 500, message: "Error updating connection." });
+  // DELETE /users/:id  (owner or admin only)
+  const deleteUser = async (req, res, next) => {
+    try {
+      const auth = req.user;
+      const targetId = Number(req.params.id);
+      if (!auth) return next({ status: 401, message: "Unauthorized" });
+      if (!(auth.id === targetId || auth.role === "admin")) {
+        return next({ status: 403, message: "Forbidden" });
+      }
 
-            // Prepare safe user data to return (without password)
-            const user = {
-                id: check[0].id,
-                firstName: check[0].firstName,
-                lastName: check[0].lastName,
-                email: check[0].email,
-                address: check[0].address,
-                complement: check[0].complement,
-                zip: check[0].zip,
-                city: check[0].city,
-                phone: check[0].phone,
-                role: check[0].role
-            };
+      const deletion = await UserModel.deleteOneUser(targetId);
+      if (deletion?.code) return next({ status: 500, message: "Error while deleting user." });
 
-            res.status(200).json({ status: 200, token, user });
-        } catch (err) {
-            next(err);
-        }
-    };
+      return res.status(200).json({ status: 200, msg: "User deleted successfully." });
+    } catch (err) {
+      next(err);
+    }
+  };
 
-    // Updates user information
-    const updateUser = async (req, res, next) => {
-        try {
-            // Validate request body
-            if (!req.body || typeof req.body !== 'object') {
-                return next({ status: 400, message: "Invalid or missing body" });
-            }
+  // GET /auth/me  (verify token; req.user set by middleware)
+  const checkToken = async (req, res, next) => {
+    try {
+      if (!req.user?.id) return next({ status: 401, message: "Unauthorized" });
 
-            // Perform update
-            const user = await UserModel.updateUser(req.body, req.params.id);
-            if (user.code) return next({ status: 500, message: "Error updating user!" });
+      const user = await UserModel.getOneUser(req.user.id);
+      if (user?.code || !Array.isArray(user) || user.length === 0) {
+        return next({ status: 404, message: "User not found." });
+      }
 
-            // Fetch updated user from DB
-            const newUser = await UserModel.getOneUser(req.params.id);
-            if (newUser.code || newUser.length === 0) {
-                return next({ status: 404, message: "Updated user not found!" });
-            }
+      const u = user[0];
+      const myUser = {
+        id: u.id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        address: u.address,
+        complement: u.complement,
+        zip: u.zip,
+        city: u.city,
+        phone: u.phone,
+        role: u.role
+      };
 
-            // Prepare updated user data to return
-            const myUser = {
-                id: newUser[0].id,
-                firstName: newUser[0].firstName,
-                lastName: newUser[0].lastName,
-                email: newUser[0].email,
-                address: newUser[0].address,
-                zip: newUser[0].zip,
-                city: newUser[0].city,
-                phone: newUser[0].phone,
-                role: newUser[0].role
-            };
+      return res.status(200).json({ status: 200, user: myUser });
+    } catch (err) {
+      next(err);
+    }
+  };
 
-            res.status(200).json({ status: 200, newUser: myUser });
-        } catch (err) {
-            next(err);
-        }
-    };
-
-    // Deletes a user based on ID
-    const deleteUser = async (req, res, next) => {
-        try {
-            const deletion = await UserModel.deleteOneUser(req.params.id);
-            if (deletion.code) return next({ status: 500, message: "Error while deleting user." });
-
-            res.status(200).json({ status: 200, msg: "User deleted successfully." });
-        } catch (err) {
-            next(err);
-        }
-    };
-
-    // Verifies the identity of the authenticated user (JWT)
-    const checkToken = async (req, res, next) => {
-        try {
-            // Fetch user using ID extracted from decoded token
-            const user = await UserModel.getOneUser(req.user.id);
-            if (user.code) return next({ status: 500, message: "Error retrieving user." });
-
-            // Prepare user data to return
-            const myUser = {
-                id: user[0].id,
-                firstName: user[0].firstName,
-                lastName: user[0].lastName,
-                email: user[0].email,
-                address: user[0].address,
-                complement: user[0].complement,
-                zip: user[0].zip,
-                city: user[0].city,
-                phone: user[0].phone,
-                role: user[0].role
-            };
-
-            res.status(200).json({ status: 200, user: myUser });
-        } catch (err) {
-            next(err);
-        }
-    };
-
-    // Expose all controller methods
-    return {
-        saveUser,
-        connectUser,
-        updateUser,
-        deleteUser,
-        checkToken
-    };
+  return { saveUser, connectUser, updateUser, deleteUser, checkToken };
 };

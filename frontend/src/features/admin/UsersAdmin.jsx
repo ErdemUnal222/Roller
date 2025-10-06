@@ -1,83 +1,233 @@
 // /src/pages/admin/UsersAdmin.jsx
-
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { fetchAllUsers } from "../../api/admin";
 import { Navigate } from "react-router-dom";
+import api from "../../api/axios";
 
-/**
- * Admin panel component for managing all registered users.
- * Fetches user data from the backend and displays it in a table.
- * Only accessible to admin users.
- */
 function UsersAdmin() {
-  // Get the current logged-in user's token and data from the Redux store
-  const token = useSelector((state) => state.user.token); // unused but kept for potential future use
+  // Auth state
+  const token = useSelector((state) => state.user.token);
   const user = useSelector((state) => state.user.user);
+  const isAdmin = (user?.role || "").toLowerCase() === "admin";
 
-  // Local state to hold the list of users and loading indicator
+  // Data state
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  /**
-   * Fetch all users from the backend when the component mounts.
-   * Uses the admin API with token-based authentication.
-   */
+  // UI state
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [busyId, setBusyId] = useState(null); // row-level busy
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ firstName: "", lastName: "", email: "", city: "", role: "user" });
+
+  const readyToFetch = useMemo(() => isAdmin && (token || localStorage.getItem("user") || localStorage.getItem("session")), [isAdmin, token]);
+
+  // Load users once auth is ready
   useEffect(() => {
+    let cancel = false;
     const loadUsers = async () => {
+      if (!readyToFetch) return;
       try {
-const data = await fetchAllUsers();
-        setUsers(Array.isArray(data) ? data : []);      } catch (err) {
-        console.error("Failed to load users:", err);
+        setLoading(true);
+        setError("");
+        // Admin list endpoint; adjust if your backend differs
+        const { data } = await api.get("/admin/users");
+        const list = Array.isArray(data?.result) ? data.result : (Array.isArray(data) ? data : []);
+        if (!cancel) setUsers(list);
+      } catch (err) {
+        if (!cancel) setError(err?.response?.data?.message || "Failed to load users.");
       } finally {
-        setLoading(false); // Stop loading spinner
+        if (!cancel) setLoading(false);
       }
     };
-
     loadUsers();
-  }, [token]);
+    return () => { cancel = true; };
+  }, [readyToFetch]);
 
-  /**
-   * Protect the route: if the user is not logged in or not an admin,
-   * redirect them to the unauthorized access page.
-   */
-  if (!user || user.role !== "admin") {
+  if (!user || !isAdmin) {
     return <Navigate to="/unauthorized" replace />;
   }
+
+  const beginEdit = (u) => {
+    setEditingId(u.id);
+    setEditForm({
+      firstName: u.firstName || "",
+      lastName: u.lastName || "",
+      email: u.email || "",
+      city: u.city || "",
+      role: (u.role || "user"),
+    });
+    setSuccess("");
+    setError("");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({ firstName: "", lastName: "", email: "", city: "", role: "user" });
+  };
+
+  const saveEdit = async (id) => {
+    try {
+      setBusyId(id);
+      setError("");
+      setSuccess("");
+      // Minimal payload; add fields if your backend supports them
+      const payload = {
+        firstName: editForm.firstName.trim(),
+        lastName: editForm.lastName.trim(),
+        email: editForm.email.trim(),
+        city: editForm.city.trim(),
+        role: editForm.role,
+      };
+      const { data } = await api.put(`/admin/users/${id}`, payload);
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...payload } : u)));
+      setSuccess(data?.message || "User updated.");
+      cancelEdit();
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to update user.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const removeUser = async (id) => {
+    if (!window.confirm("Delete this user? This cannot be undone.")) return;
+    try {
+      setBusyId(id);
+      setError("");
+      setSuccess("");
+      await api.delete(`/admin/users/${id}`);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+      setSuccess("User deleted.");
+      if (editingId === id) cancelEdit();
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to delete user.");
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   return (
     <div className="admin-users">
       <h2 className="admin-title">Manage Users</h2>
 
-      {/* Loading indicator while user data is being fetched */}
+      {error && <div className="form-error" style={{ marginBottom: 12 }}>{error}</div>}
+      {success && <div className="form-success" style={{ marginBottom: 12 }}>{success}</div>}
+
       {loading ? (
         <p>Loading users...</p>
+      ) : users.length === 0 ? (
+        <p>No users found.</p>
       ) : (
         <table className="user-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
+              <th style={{ minWidth: 160 }}>Name</th>
+              <th style={{ minWidth: 220 }}>Email</th>
               <th>City</th>
-              <th>Role</th>
-              <th>Actions</th>
+              <th style={{ minWidth: 120 }}>Role</th>
+              <th style={{ width: 220 }}>Actions</th>
             </tr>
           </thead>
-
           <tbody>
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td>{u.firstName} {u.lastName}</td>
-                <td>{u.email}</td>
-                <td>{u.city}</td>
-                <td>{u.role}</td>
-                <td>
-                  {/* Buttons for future Edit/Delete functionality */}
-                  <button>Edit</button>
-                  <button>Delete</button>
-                </td>
-              </tr>
-            ))}
+            {users.map((u) => {
+              const isEditing = editingId === u.id;
+              return (
+                <tr key={u.id}>
+                  <td>
+                    {isEditing ? (
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <input
+                          value={editForm.firstName}
+                          onChange={(e) => setEditForm((f) => ({ ...f, firstName: e.target.value }))}
+                          placeholder="First name"
+                        />
+                        <input
+                          value={editForm.lastName}
+                          onChange={(e) => setEditForm((f) => ({ ...f, lastName: e.target.value }))}
+                          placeholder="Last name"
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        {u.firstName} {u.lastName}
+                      </>
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input
+                        value={editForm.email}
+                        onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                        placeholder="Email"
+                        type="email"
+                      />
+                    ) : (
+                      u.email
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input
+                        value={editForm.city}
+                        onChange={(e) => setEditForm((f) => ({ ...f, city: e.target.value }))}
+                        placeholder="City"
+                      />
+                    ) : (
+                      u.city
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <select
+                        value={editForm.role}
+                        onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
+                      >
+                        <option value="user">user</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    ) : (
+                      u.role
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <>
+                        <button
+                          className="button button--primary"
+                          onClick={() => saveEdit(u.id)}
+                          disabled={busyId === u.id}
+                        >
+                          Save
+                        </button>
+                        <button className="button button--ghost" onClick={cancelEdit} disabled={busyId === u.id} style={{ marginLeft: 8 }}>
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="button button--ghost"
+                          onClick={() => beginEdit(u)}
+                          disabled={busyId === u.id}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="button button--danger"
+                          onClick={() => removeUser(u.id)}
+                          disabled={busyId === u.id}
+                          style={{ marginLeft: 8 }}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

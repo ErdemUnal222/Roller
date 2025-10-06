@@ -3,54 +3,197 @@
 /* --- Availability Page Container --- */
 .availability-page {
   padding: 1rem;
+  color: var(--text);
+}
+
+.availability-header {
+  display: grid;
+  gap: .5rem;
+  margin-bottom: .75rem;
 }
 
 .availability-title {
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
+  font-size: clamp(1.2rem, 2.2vw, 1.5rem);
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+
+/* Filter pills */
+.availability-tabs {
+  display: inline-flex;
+  gap: .4rem;
+  flex-wrap: wrap;
+
+  .pill {
+    appearance: none;
+    padding: .45rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font: 700 .85rem/1 var(--font-ui, system-ui);
+    cursor: pointer;
+    transition: background-color .15s, border-color .15s, transform .02s;
+
+    &:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); }
+    &:active { transform: translateY(1px); }
+    &.active {
+      background: var(--card-2);
+      border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    }
+  }
+}
+
+/* Banners */
+.availability-banner {
+  margin-top: .25rem;
+  padding: .65rem .8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--text);
+  text-align: center;
+
+  &.error {
+    border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+    background: color-mix(in srgb, var(--danger) 10%, var(--card-2));
+  }
+  &.success {
+    border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+    background: color-mix(in srgb, var(--success) 10%, var(--card-2));
+  }
 }
 
 /* --- Availability Form --- */
 .availability-form {
   margin-bottom: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  max-width: 400px;
+  max-width: 720px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding: 1rem;
+  box-shadow: var(--shadow-1);
 
-  .availability-input {
-    border: 1px solid #ccc;
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-    width: 100%;
+  label {
+    font-weight: 700;
+    color: var(--text);
   }
 
-  .availability-button {
-    background-color: #16a34a;
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.2s;
+  .availability-input {
+    width: 100%;
+    padding: .7rem .85rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    transition: border-color .15s, box-shadow .15s;
 
-    &:hover {
-      background-color: #15803d;
+    &::placeholder { color: var(--text-muted); }
+    &:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--focus-ring);
     }
   }
 }
 
-/* --- Availability List --- */
-.availability-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+/* --- List & Cards --- */
+.availability-list-wrap { margin-top: 1rem; }
 
-  .availability-item {
-    border: 1px solid #ccc;
-    padding: 0.75rem;
-    border-radius: 0.25rem;
+.availability-day { margin-bottom: 1rem; }
+.availability-day-title {
+  margin: 0 0 .4rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.availability-list {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: grid;
+  gap: .6rem;
+
+  &.skeleton .availability-card {
+    .sk-line {
+      height: 12px;
+      border-radius: 6px;
+      background: linear-gradient(90deg,
+        var(--card-2),
+        color-mix(in srgb, var(--card-2) 70%, var(--text) 10%),
+        var(--card-2));
+      background-size: 200% 100%;
+      animation: av-shimmer 1.3s linear infinite;
+
+      &.w-60 { width: 60%; }
+      &.w-40 { width: 40%; }
+    }
   }
+}
+
+.availability-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background-color: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow-1);
+}
+
+.availability-info {
+  display: grid;
+  gap: .25rem;
+
+  .times {
+    strong { color: var(--text); }
+    span { color: var(--text-muted); }
+  }
+  .availability-comment {
+    color: var(--text-muted);
+    font-size: .95rem;
+    font-style: italic;
+  }
+}
+
+.availability-actions {
+  display: flex;
+  gap: .5rem;
+
+  .button {
+    border: 1px solid var(--border);
+    background: var(--card-2);
+    color: var(--text);
+  }
+  .button--danger {
+    background: var(--danger);
+    color: var(--accent-contrast);
+    border-color: transparent;
+  }
+}
+
+.availability-empty {
+  display: grid;
+  place-items: center;
+  gap: .5rem;
+  padding: 2rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--text-muted);
+}
+
+/* Small screens */
+@media (max-width: 560px) {
+  .availability-card { flex-direction: column; align-items: stretch; }
+  .availability-actions { justify-content: flex-end; }
+}
+
+/* Skeleton animation */
+@keyframes av-shimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: -200% 0; }
 }

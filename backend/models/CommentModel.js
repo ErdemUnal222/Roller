@@ -7,46 +7,55 @@ class CommentModel {
   // CREATE: Add a new comment linked to a specific user and event
   async addComment({ text, event_id, user_id }) {
     try {
-      // Insert the comment into the 'comments' table with a current timestamp
       const result = await this.db.query(
         `INSERT INTO comments (content, event_id, user_id, created_at) VALUES (?, ?, ?, NOW())`,
         [text, event_id, user_id]
       );
 
-      // Return a comment object formatted for frontend usage
       return {
         id: result.insertId,
         content: text,
         event_id,
         user_id,
-        created_at: new Date() // frontend might display this directly
+        created_at: new Date()
       };
     } catch (error) {
-      // Log error for server debugging
       console.error("Error adding comment:", error);
-      throw error; // Pass the error up to be handled by controller or middleware
+      throw error;
     }
   }
 
-  // UPDATE: Allow users to edit their own comment by checking ownership
+  // UPDATE (OWNER): Allow users to edit their own comment by checking ownership
   async updateComment(commentId, userId, text) {
     try {
-      // Update only if the user is the original author of the comment
       const result = await this.db.query(
         `UPDATE comments SET content = ?, updated_at = NOW() WHERE id = ? AND user_id = ?`,
         [text, commentId, userId]
       );
-      return result;
+      return result; // expect result.affectedRows from your db wrapper
     } catch (err) {
       console.error("Error updating comment:", err);
       throw err;
     }
   }
 
-  // DELETE: Allow users to delete only their own comments
+  // UPDATE (ADMIN): Edit any comment (no user_id guard)
+  async updateCommentAdmin(commentId, text) {
+    try {
+      const result = await this.db.query(
+        `UPDATE comments SET content = ?, updated_at = NOW() WHERE id = ?`,
+        [text, commentId]
+      );
+      return result;
+    } catch (err) {
+      console.error("Error admin-updating comment:", err);
+      throw err;
+    }
+  }
+
+  // DELETE (OWNER): Allow users to delete only their own comments
   async deleteComment(commentId, userId) {
     try {
-      // Only delete if user is the owner (based on ID match)
       const result = await this.db.query(
         `DELETE FROM comments WHERE id = ? AND user_id = ?`,
         [commentId, userId]
@@ -54,6 +63,20 @@ class CommentModel {
       return result;
     } catch (err) {
       console.error("Error deleting comment:", err);
+      throw err;
+    }
+  }
+
+  // DELETE (ADMIN): Delete any comment (no user_id guard)
+  async forceDeleteComment(commentId) {
+    try {
+      const result = await this.db.query(
+        `DELETE FROM comments WHERE id = ?`,
+        [commentId]
+      );
+      return result;
+    } catch (err) {
+      console.error("Error force deleting comment:", err);
       throw err;
     }
   }
@@ -66,7 +89,7 @@ class CommentModel {
          FROM comments
          JOIN users ON comments.user_id = users.id
          WHERE comments.event_id = ?
-         ORDER BY comments.created_at DESC`, // show newest comments first
+         ORDER BY comments.created_at DESC`,
         [eventId]
       );
       return result;

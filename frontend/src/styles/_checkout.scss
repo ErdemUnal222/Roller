@@ -4,9 +4,10 @@
   max-width: 768px;
   margin: 2rem auto;
   padding: 1.5rem;
-  background-color: #ffffff;
+  background-color: var(--bg-light);
   border-radius: 0.5rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  color: var(--text-main);
 }
 
 .checkout-title {
@@ -14,6 +15,7 @@
   font-weight: bold;
   margin-bottom: 1.5rem;
   text-align: center;
+  color: var(--text-main);
 }
 
 .order-summary {
@@ -23,6 +25,7 @@
     font-size: 1.125rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
+    color: var(--text-main);
   }
 
   .summary-items {
@@ -35,21 +38,23 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-gray);
     padding-bottom: 0.5rem;
   }
 
   .summary-item-title {
     font-weight: 500;
+    color: var(--text-main);
   }
 
   .summary-item-details {
     font-size: 0.875rem;
-    color: #555;
+    color: var(--text-muted);
   }
 
   .summary-item-total {
     font-weight: 600;
+    color: var(--text-main);
   }
 
   .summary-total {
@@ -57,6 +62,7 @@
     margin-top: 1rem;
     font-size: 1.125rem;
     font-weight: bold;
+    color: var(--text-main);
   }
 }
 
@@ -67,15 +73,21 @@
 
   .checkout-input {
     width: 100%;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-gray);
     padding: 0.5rem;
     font-size: 1rem;
     border-radius: 0.25rem;
+    background-color: var(--bg-light);
+    color: var(--text-main);
+
+    &::placeholder {
+      color: var(--text-muted);
+    }
   }
 
   .checkout-button {
     width: 100%;
-    background-color: #16a34a;
+    background-color: var(--success);
     color: white;
     padding: 0.75rem;
     font-size: 1rem;
@@ -85,7 +97,7 @@
     transition: background-color 0.2s;
 
     &:hover {
-      background-color: #15803d;
+      background-color: var(--success-hover);
     }
   }
 }
@@ -94,22 +106,24 @@
   max-width: 600px;
   margin: 2rem auto;
   padding: 1.5rem;
-  background-color: #fff;
+  background-color: var(--bg-light);
   border-radius: 0.5rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
+  color: var(--text-main);
 }
 
 .success-title {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #16a34a;
+  color: var(--success);
   margin-bottom: 1rem;
 }
 
 .success-message {
   margin-bottom: 1.5rem;
   font-size: 1rem;
+  color: var(--text-main);
 }
 
 .shipping-info,
@@ -121,6 +135,7 @@
 .info-heading {
   font-weight: 600;
   margin-bottom: 0.5rem;
+  color: var(--text-main);
 }
 
 .summary-list {
@@ -131,6 +146,7 @@
   li {
     font-size: 0.875rem;
     margin-bottom: 0.25rem;
+    color: var(--text-main);
   }
 }
 
@@ -138,4 +154,5 @@
   font-size: 1.25rem;
   font-weight: bold;
   margin-top: 1rem;
+  color: var(--text-main);
 }

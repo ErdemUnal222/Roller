@@ -1,59 +1,29 @@
 # Roller
 
-This repository contains the full stack code for the **Roller Derby** platform. The project is split into two main parts:
+Roller Derby is a full-stack platform built for the roller derby community.  
+It helps **players, clubs, and organizers** manage events, track availability, exchange messages, and even run a small e-commerce shop for products and memorabilia.
 
-- **`backend/`** – an Express + MySQL API with JWT authentication and Stripe payments.
-- **`frontend/`** – a React application bootstrapped with Vite.
+The project is split into two main parts:
 
-## Requirements
+- **`backend/`** – Node.js + Express API with MySQL, JWT authentication, and Stripe payments.
+- **`frontend/`** – React application bootstrapped with Vite and styled with SCSS.
 
-- **Node.js** v14 or higher
-- **npm** (comes with Node.js)
-- A **MySQL** instance for the backend
+---
 
-Environment variables are required for both applications:
-
-- The backend expects an `.env` file inside `backend/` (see [`backend/README.md`](backend/README.md)).
-- The frontend expects a `.env` file inside `frontend/` defining `VITE_API_BASE_URL` (see [`frontend/README.md`](frontend/README.md)).
-
-## Installation
-
-Install dependencies for each part separately:
+## 🚀 Quickstart
 
 ```bash
-# Backend dependencies
-cd backend && npm install
+git clone <repo-url>
+cd roller
 
-# Frontend dependencies
-cd ../frontend && npm install
-```
-
-## Running the applications
-
-### Backend
-
-```bash
+# Start backend
 cd backend
-npm run dev   # start with nodemon for development
+npm install
+npm run dev   # nodemon for development
 # or
-npm start     # run with Node in production
-```
+npm start     # production mode
 
-The API listens on the port specified by `PORT` in your `.env` (defaults to `9500`).
-
-### Frontend
-
-```bash
-cd frontend
+# Start frontend (in another terminal)
+cd ../frontend
+npm install
 npm run dev
-```
-
-The Vite dev server will start (typically on <http://localhost:5173>).
-Set `VITE_API_BASE_URL` in `frontend/.env` so the frontend can reach the API.
-
-## More information
-
-Refer to the dedicated READMEs for details on each part:
-
-- [Backend README](backend/README.md)
-- [Frontend README](frontend/README.md)

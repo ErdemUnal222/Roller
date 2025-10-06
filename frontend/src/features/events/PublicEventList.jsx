@@ -1,95 +1,138 @@
 // Import React hooks and other necessary modules
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { getAllEvents } from '../../api/eventService'; // API function to fetch events
-import '/src/styles/main.scss'; // Global styles
+import { getAllEvents } from '../../api/eventService';
+import '/src/styles/main.scss';
+
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || '';
+
+function formatDate(v) {
+  const d = v ? new Date(v) : null;
+  if (!d || Number.isNaN(d.getTime())) return 'TBA';
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+  });
+}
 
 /**
- * PublicEventList Component
- * This component is responsible for displaying a public list of all upcoming events.
- * It is accessible to any user, even without being logged in.
+ * PublicEventList — polished, shop-style grid of events
  */
-function PublicEventList() {
-  // Local state to store fetched events
-  const [events, setEvents] = useState([]);
-  const [error, setError] = useState('');     // To handle fetch errors
-  const [loading, setLoading] = useState(true); // Show loading message until events are fetched
-
-  // Optional: Get user role from Redux if you want to show different info for different roles
+export default function PublicEventList() {
   const role = useSelector((state) => state.user.user?.role);
-  /**
-   * Fetch the list of events when the component is first rendered.
-   */
+  const [events, setEvents] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // nice skeleton count
+  const placeholders = useMemo(() => Array.from({ length: 8 }), []);
+
   useEffect(() => {
-    const fetchEvents = async () => {
+    let cancel = false;
+
+    (async () => {
       try {
-        // Call API to get all events
+        setLoading(true);
+        setError('');
+
         const data = await getAllEvents();
+        // normalize a variety of backend shapes
+        const list =
+          Array.isArray(data?.result) ? data.result :
+          Array.isArray(data?.events) ? data.events :
+          Array.isArray(data) ? data : [];
 
-        // Ensure we always get an array (in case backend returns a single object)
-        const normalized = Array.isArray(data) ? data : [data];
-
-        // Save events to state
-        setEvents(normalized);
+        if (!cancel) setEvents(list);
       } catch (err) {
         console.error('Error fetching events:', err);
-        setError('Failed to load events.');
+        if (!cancel) setError('Failed to load events.');
       } finally {
-        setLoading(false); // Stop loading spinner regardless of success or failure
+        if (!cancel) setLoading(false);
       }
-    };
+    })();
 
-    fetchEvents();
-  }, []); // Empty dependency array means this effect runs once on component mount
+    return () => { cancel = true; };
+  }, []);
 
   return (
     <main className="public-events-page">
       <h1 className="public-events-title">Upcoming Events</h1>
 
-      {/* Show loading message while fetching data */}
-      {loading && <p className="loading-msg">Loading events...</p>}
+      {error && (
+        <div className="events-banner error" role="alert">
+          {error}
+        </div>
+      )}
 
-      {/* Show error message if an error occurred */}
-      {error && <p className="public-events-error">{error}</p>}
-
-      <section className="public-event-list">
-        {/* Check if events exist and display them */}
-        {Array.isArray(events) && events.length > 0 ? (
-          events.map((event) => (
-            <article key={event.id} className="public-event-card">
-              {/* Event title */}
-              <h2 className="event-name">{event.title}</h2>
-
-              {/* Display formatted event date */}
-              <time className="event-date">
-                {new Date(event.event_date).toLocaleDateString()}
-              </time>
-
-              {/* Show a preview of the event description (first 150 characters) */}
-              <p className="event-description">
-                {event.description?.slice(0, 150)}...
-              </p>
-
-              {/* Link to detailed event view */}
-              <Link
-                to={`/events/${event.id}`}
-                className="event-link"
-                aria-label={`View details about ${event.title}`}
-              >
-                View Details →
-              </Link>
+      {loading ? (
+        <section className="public-event-list" aria-live="polite" aria-busy="true">
+          {placeholders.map((_, i) => (
+            <article key={`ph-${i}`} className="public-event-card skeleton">
+              <div className="media"></div>
+              <div className="line w-60"></div>
+              <div className="line w-40"></div>
+              <div className="line w-90"></div>
+              <div className="actions">
+                <span className="btn shimmer"></span>
+              </div>
             </article>
-          ))
-        ) : (
-          // If no events and not loading or error, show fallback message
-          !loading && !error && (
-            <p className="event-empty">No events available at this time.</p>
-          )
-        )}
-      </section>
+          ))}
+        </section>
+      ) : events.length === 0 ? (
+        <div className="events-empty">
+          <p>No events available at this time.</p>
+          <Link to="/" className="button button--ghost">Back to home</Link>
+        </div>
+      ) : (
+        <section className="public-event-list">
+          {events.map((ev) => {
+            const imgSrc = ev.picture
+              ? (BASE_URL ? `${BASE_URL}/uploads/events/${ev.picture}` : `/uploads/events/${ev.picture}`)
+              : null;
+
+            return (
+              <article key={ev.id} className="public-event-card" tabIndex={0}>
+                <div className="media">
+                  {imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={ev.alt || ev.title || 'Event image'}
+                      className="event-image"
+                      onError={(e) => (e.currentTarget.style.visibility = 'hidden')}
+                    />
+                  ) : (
+                    <div className="img-fallback" aria-hidden="true" />
+                  )}
+
+                  {/* optional small tag if you want to flag role-based controls later */}
+                  {role === 'admin' && <span className="badge">Admin</span>}
+                </div>
+
+                <div className="info">
+                  <h2 className="event-name" title={ev.title}>{ev.title}</h2>
+                  <time className="event-date">{formatDate(ev.event_date)}</time>
+                  <p className="event-description">
+                    {ev.description ? `${ev.description.slice(0, 150)}…` : 'No description provided.'}
+                  </p>
+                </div>
+
+                <div className="actions">
+                  <Link
+                    to={`/events/${ev.id}`}
+                    className="button button--primary"
+                    aria-label={`View details about ${ev.title}`}
+                  >
+                    View details
+                  </Link>
+                </div>
+              </article>
+            );
+          })}
+        </section>
+      )}
     </main>
   );
 }
-
-export default PublicEventList;

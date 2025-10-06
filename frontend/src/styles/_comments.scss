@@ -3,6 +3,7 @@
 /* --- Comment Section Wrapper --- */
 .comments-section {
   padding: 1rem;
+  color: var(--text-main);
 }
 
 .comments-title {
@@ -12,7 +13,7 @@
 }
 
 .comments-error {
-  color: #dc2626;
+  color: var(--error);
   margin-bottom: 1rem;
 }
 
@@ -24,15 +25,21 @@
   gap: 0.75rem;
 
   .comment-input {
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-gray);
     padding: 0.5rem;
     border-radius: 0.25rem;
     width: 100%;
     resize: vertical;
+    background-color: var(--bg-light);
+    color: var(--text-main);
+
+    &::placeholder {
+      color: var(--text-muted);
+    }
   }
 
   .comment-button {
-    background-color: #2563eb;
+    background-color: var(--accent);
     color: white;
     padding: 0.5rem 1rem;
     border: none;
@@ -41,7 +48,7 @@
     font-weight: 500;
 
     &:hover {
-      background-color: #1e40af;
+      background-color: var(--accent-hover);
     }
   }
 }
@@ -55,9 +62,11 @@
 
 /* --- Individual Comment --- */
 .comment-item {
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-gray);
   padding: 0.75rem;
   border-radius: 0.25rem;
+  background-color: var(--bg-light);
+  color: var(--text-main);
 
   .comment-author {
     font-weight: 500;
@@ -73,8 +82,10 @@
     width: 100%;
     padding: 0.5rem;
     margin-top: 0.5rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-gray);
     border-radius: 0.25rem;
+    background-color: var(--bg-light);
+    color: var(--text-main);
   }
 
   .comment-actions {
@@ -92,25 +103,25 @@
     }
 
     .comment-edit {
-      background-color: #f59e0b;
+      background-color: var(--warning);
     }
 
     .comment-delete {
-      background-color: #dc2626;
+      background-color: var(--error);
     }
 
     .comment-save {
-      background-color: #16a34a;
+      background-color: var(--success);
     }
 
     .comment-cancel {
-      background-color: #6b7280;
+      background-color: var(--text-muted);
     }
   }
 }
 
 /* --- Empty Comment Placeholder --- */
 .comment-empty {
-  color: #6b7280;
+  color: var(--text-muted);
   font-style: italic;
 }

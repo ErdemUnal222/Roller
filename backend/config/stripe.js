@@ -1,16 +1,29 @@
-// Load environment variables from the .env file into process.env
-require("dotenv").config();
+// config/stripe.js
+require('dotenv').config();
+const Stripe = require('stripe');
 
-// Import the Stripe library
-const Stripe = require("stripe");
-
-// Initialize the Stripe client using the secret key from the environment variables
-const stripe = Stripe(process.env.STRIPE_SECRET);
-
-// Check if the Stripe secret key is provided; throw an error if it's missing
-if (!process.env.STRIPE_SECRET) {
-  throw new Error("STRIPE_SECRET is not defined in .env");
+// Never load this in the browser bundle
+if (typeof window !== 'undefined') {
+  throw new Error('Do not import the Stripe secret on the client.');
 }
 
-// Export the configured Stripe instance so it can be used in other parts of the app
+// Accept both env names; use your *secret* (sk_...) key
+const secret =
+  process.env.STRIPE_SECRET_KEY ||
+  process.env.STRIPE_SECRET;
+
+if (!secret) {
+  throw new Error('Stripe secret is not set (STRIPE_SECRET_KEY or STRIPE_SECRET).');
+}
+
+if (/^pk_/.test(secret)) {
+  throw new Error('Publishable key detected. Use your secret key (starts with sk_...) on the server.');
+}
+
+// Optional (recommended): pin API version + add timeout
+const stripe = new Stripe(secret, {
+  apiVersion: process.env.STRIPE_API_VERSION || '2023-10-16',
+  timeout: 20000, // 20s
+});
+
 module.exports = stripe;

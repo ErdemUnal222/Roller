@@ -1,186 +1,352 @@
-// Import necessary dependencies and components
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+// /src/features/events/EventDetails.jsx
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import api from '../../api/axios'; // Axios instance with predefined settings
-import Comments from '../comments/Comments'; // Comment section component
-import "/src/styles/main.scss"; // Global SCSS styles
+import api from '../../api/axios';
+import Comments from '../comments/Comments';
+import '/src/styles/main.scss';
 
-const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
-/**
- * EventDetails Component
- * This component displays a detailed view of a single event.
- * It allows users to register/unregister for the event.
- * Admins can also upload or update the event image.
- */
+const BASE_URL =
+  import.meta.env.VITE_SERVER_BASE_URL ||
+  api?.defaults?.baseURL ||
+  'http://localhost:5000';
+
+function formatDate(v) {
+  const d = v ? new Date(v) : null;
+  if (!d || Number.isNaN(d.getTime())) return 'TBA';
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+  });
+}
+
+function formatPrice(v) {
+  const n = Number(v ?? 0);
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
+}
+
+// Robust normalizer for various image shapes
+function buildImageSrc(file) {
+  if (!file) return null;
+  if (/^https?:\/\//i.test(file)) return file;
+
+  // Normalize: "filename.jpg", "events/filename.jpg", "uploads/events/filename.jpg", "/uploads/..."
+  let f = String(file).trim();
+  // strip leading slashes
+  f = f.replace(/^\/+/, '');
+
+  if (!f.startsWith('uploads/')) {
+    // if backend sends "events/filename.jpg" keep it under uploads/events
+    f = f.startsWith('events/') ? `uploads/${f}` : `uploads/events/${f}`;
+  }
+
+  const prefix = `${String(BASE_URL).replace(/\/+$/, '')}/`;
+  return `${prefix}${f}`.replace(/([^:]\/)\/+/g, '$1'); // collapse accidental double slashes
+}
+
 const EventDetails = () => {
-  // Extract event ID from the URL
   const { id } = useParams();
+  const [event, setEvent] = useState(null);
+  const [message, setMessage] = useState('');
+  const [msgType, setMsgType] = useState('info'); // 'success' | 'error' | 'info'
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
 
-  // Component state
-  const [event, setEvent] = useState(null); // Holds the event data
-  const [message, setMessage] = useState(''); // Feedback message
-  const [selectedFile, setSelectedFile] = useState(null); // File selected for upload
-  const [isRegistered, setIsRegistered] = useState(false); // Registration status
-
-  // Get user role from Redux store
-  const role = useSelector((state) => state.user.user?.role);
+  const role = useSelector((s) => s.user.user?.role);
   const isAdmin = role?.toLowerCase() === 'admin';
+  const token =
+    useSelector((s) => s.user.token) ||
+    JSON.parse(localStorage.getItem('user') || '{}')?.token ||
+    null;
 
-  /**
-   * Checks if the current user is registered for the event.
-   */
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+  const remaining = useMemo(() => {
+    const total = Number(event?.places ?? 0);
+    return Number.isNaN(total) ? 0 : total;
+  }, [event]);
+
+  const canRegister = !!token && remaining > 0 && !isRegistered && !busy;
+
+  // Fetch registration status
   const checkRegistration = async () => {
+    if (!token) { setIsRegistered(false); return; }
     try {
-      const res = await api.get(`/events/${id}/is-registered`);
-      setIsRegistered(res.data.registered);
+      const res = await api.get(`/events/${id}/is-registered`, { headers: authHeader });
+      setIsRegistered(!!res.data?.registered);
     } catch (err) {
-      console.error('Registration check failed:', err);
-      setIsRegistered(false); // default to false if error occurs
+      console.warn('Registration check failed:', err?.response?.data?.message || err?.message);
+      setIsRegistered(false);
     }
   };
 
-  /**
-   * Fetch event details from API using event ID.
-   */
+  // Fetch event details
   const fetchEvent = async () => {
     try {
+      setLoading(true);
+      setError('');
       const res = await api.get(`/events/${id}`);
-      setEvent(res.data.result);
+      setEvent(res.data?.result || res.data?.event || res.data || null);
     } catch (err) {
       console.error('Error fetching event:', err);
+      setEvent(null);
+      setError(err?.response?.data?.message || 'Failed to load event.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // On component mount or when event ID changes, fetch data
   useEffect(() => {
+    if (!id) return;
     fetchEvent();
-    checkRegistration();
-  }, [id]);
+    if (token) checkRegistration();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, token]);
 
-  /**
-   * Handles event registration.
-   */
+  // Register
   const handleRegister = async () => {
+    if (!token) {
+      setMsgType('error');
+      setMessage('Please log in to register.');
+      return;
+    }
     try {
-      await api.post(`/events/${id}/register`);
+      setBusy(true);
+      await api.post(`/events/${id}/register`, null, { headers: authHeader });
       await checkRegistration();
+      setMsgType('success');
       setMessage('Successfully registered for the event.');
     } catch (err) {
-      setMessage(err.response?.data?.message || 'Registration failed.');
+      console.error('Register error:', err);
+      setMsgType('error');
+      setMessage(err?.response?.data?.message || 'Registration failed.');
+    } finally {
+      setBusy(false);
     }
   };
 
-  /**
-   * Handles event unregistration.
-   */
+  // Unregister
   const handleUnregister = async () => {
+    if (!token) return;
     try {
-      await api.delete(`/events/${id}/unregister`);
+      setBusy(true);
+      await api.delete(`/events/${id}/unregister`, { headers: authHeader });
       await checkRegistration();
+      setMsgType('success');
       setMessage('You have been unregistered from the event.');
     } catch (err) {
-      setMessage('Could not unregister from the event.');
+      console.error('Unregister error:', err);
+      setMsgType('error');
+      setMessage(err?.response?.data?.message || 'Could not unregister.');
+    } finally {
+      setBusy(false);
     }
   };
 
-  /**
-   * Handles file input change for uploading a new image.
-   */
+  // Select image
   const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
+    const f = e.target.files?.[0];
+    setSelectedFile(f || null);
   };
 
-  /**
-   * Handles uploading and assigning an image to the event.
-   * Admin-only functionality.
-   */
+  // Upload event image (admin only)
   const handleUploadPicture = async () => {
-    if (!selectedFile) return;
+    if (!isAdmin) {
+      setMsgType('error');
+      setMessage('Only admins can upload event pictures.');
+      return;
+    }
+    if (!selectedFile) {
+      setMsgType('error');
+      setMessage('Please select an image first.');
+      return;
+    }
 
-if (!isAdmin) {
-  setMessage('Only admins can upload event pictures.');
+    // Basic validation
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(selectedFile.type)) {
+      setMsgType('error');
+      setMessage('Invalid file type. Please upload JPG, PNG, or WEBP.');
+      return;
+    }
+    if (selectedFile.size > 2 * 1024 * 1024) {
+      setMsgType('error');
+      setMessage('File too large (max 2MB).');
       return;
     }
 
     const formData = new FormData();
+    // Keep field name 'image' to match your backend route
     formData.append('image', selectedFile);
 
     try {
-      // Upload image to server
+      setBusy(true);
       const uploadRes = await api.post('/events/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { ...authHeader, 'Content-Type': 'multipart/form-data' },
       });
 
-      // Update event with new image reference
-      await api.put(`/events/${id}`, {
-        ...event,
-        picture: uploadRes.data.filename,
-      });
+      const filename =
+        uploadRes.data?.filename ||
+        uploadRes.data?.result?.filename ||
+        uploadRes.data?.path || // in case backend returns full path
+        null;
 
-      // Refresh event details to reflect change
-      const updated = await api.get(`/events/${id}`);
-      setEvent(updated.data.result);
+      if (!filename) throw new Error('Upload did not return a filename.');
+
+      // Update both possible columns to be safe (picture/image)
+      await api.put(
+        `/events/${id}`,
+        { ...event, picture: filename, image: filename },
+        { headers: authHeader }
+      );
+
+      await fetchEvent();
       setSelectedFile(null);
+      setMsgType('success');
       setMessage('Picture updated successfully.');
     } catch (err) {
       console.error('Upload failed:', err);
-      setMessage('Failed to upload or update picture.');
+      setMsgType('error');
+      setMessage(err?.response?.data?.message || 'Failed to upload or update picture.');
+    } finally {
+      setBusy(false);
     }
   };
 
-  // Show loading state if event has not loaded yet
-  if (!event) return <div className="event-loading">Loading event...</div>;
+  if (loading) {
+    return (
+      <div className="event-details card skeleton">
+        <div className="media"></div>
+        <div className="line w-80"></div>
+        <div className="line w-50"></div>
+        <div className="line w-95"></div>
+        <div className="line w-70"></div>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="event-details card">
+        <div className="events-banner error" role="alert">
+          {error || 'Event not found.'}
+        </div>
+        <Link to="/events" className="button button--ghost" style={{ marginTop: '.75rem' }}>
+          Back to events
+        </Link>
+      </div>
+    );
+  }
+
+  // Use any of the common image keys
+  const fileKey = event?.picture ?? event?.image ?? event?.imageUrl ?? event?.img ?? null;
+  const imgSrc = buildImageSrc(fileKey);
+  const dateText = formatDate(event.event_date);
+  const priceText = formatPrice(event.price);
 
   return (
-    <div className="event-details">
-      <h1 className="event-title">{event.title}</h1>
-
-      {/* Event image, if available */}
-      {event.picture && (
-        <img
-          src={`${BASE_URL}/uploads/${event.picture}`}
-          alt={event.alt || event.title}
-          className="event-image"
-        />
-      )}
-
-      {/* Event information */}
-      <p className="event-description">{event.description}</p>
-      <p className="event-meta">Date: {new Date(event.event_date).toLocaleDateString()}</p>
-      <p className="event-meta">Available Places: {event.places}</p>
-      <p className="event-meta">Price: €{event.price}</p>
-
-      {/* Admin-only section for uploading a new event image */}
-      {isAdmin && (
-      <div className="event-upload">
-          <label htmlFor="event-image-upload">Upload or Change Event Image</label>
-          <input
-            id="event-image-upload"
-            type="file"
-            onChange={handleFileChange}
-            accept="image/*"
+    <div className="event-details card">
+      {/* Image */}
+      <div className="event-hero">
+        {imgSrc ? (
+          <img
+            src={imgSrc}
+            alt={event.alt || event.title}
+            className="event-hero-img"
+            onError={(e) => {
+              // Fallback once to "uploads/<basename>" if first attempt fails
+              const original = fileKey;
+              if (original && !/\/uploads\//.test(e.currentTarget.src)) {
+                const base = String(original).split('/').pop();
+                const altSrc = buildImageSrc(base);
+                if (altSrc && altSrc !== e.currentTarget.src) {
+                  e.currentTarget.src = altSrc;
+                  return;
+                }
+              }
+              e.currentTarget.style.visibility = 'hidden';
+            }}
           />
-          <button onClick={handleUploadPicture}>Upload Image</button>
+        ) : (
+          <div className="hero-fallback" aria-hidden="true" />
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="event-info">
+        <h1 className="event-title">{event.title}</h1>
+
+        <div className="meta">
+          <span className="pill">{dateText}</span>
+          <span className="pill">{priceText}</span>
+          {typeof event.places !== 'undefined' && (
+            <span className={`pill ${remaining <= 0 ? 'danger' : ''}`}>
+              {remaining > 0 ? `${remaining} places` : 'Full'}
+            </span>
+          )}
         </div>
-      )}
 
-      {/* Registration/unregistration button */}
-      {isRegistered ? (
-        <button className="event-button unregister" onClick={handleUnregister}>
-          Unregister
-        </button>
-      ) : (
-        <button className="event-button register" onClick={handleRegister}>
-          Register
-        </button>
-      )}
+        <p className="event-description">{event.description || 'No description provided.'}</p>
 
-      {/* Display status or error messages */}
-      {message && <p className="event-message">{message}</p>}
+        {/* Admin upload */}
+        {isAdmin && (
+          <div className="event-upload">
+            <label htmlFor="event-image-upload">Upload or Change Event Image</label>
+            <input
+              id="event-image-upload"
+              type="file"
+              onChange={handleFileChange}
+              accept="image/*"
+              disabled={busy}
+            />
+            <button
+              className="button button--accent"
+              onClick={handleUploadPicture}
+              disabled={busy || !selectedFile}
+            >
+              {busy ? 'Uploading…' : 'Upload Image'}
+            </button>
+          </div>
+        )}
 
-      {/* Comments section for the event */}
-      <Comments eventId={id} />
+        {/* Registration */}
+        <div className="event-actions">
+          {!token ? (
+            <Link to="/login" className="button button--primary">Log in to register</Link>
+          ) : isRegistered ? (
+            <button className="button button--danger" onClick={handleUnregister} disabled={busy}>
+              {busy ? 'Processing…' : 'Unregister'}
+            </button>
+          ) : (
+            <button
+              className="button button--primary"
+              onClick={handleRegister}
+              disabled={!canRegister}
+              aria-disabled={!canRegister}
+              title={!canRegister && !token ? 'Login required' : undefined}
+            >
+              {busy ? 'Processing…' : 'Register'}
+            </button>
+          )}
+        </div>
+
+        {/* Flash message */}
+        {message && (
+          <div className={`events-banner inline ${msgType === 'error' ? 'error' : msgType === 'success' ? 'success' : ''}`}>
+            {message}
+          </div>
+        )}
+      </div>
+
+      {/* Comments */}
+      <div className="event-comments">
+        <Comments eventId={id} />
+      </div>
     </div>
   );
 };

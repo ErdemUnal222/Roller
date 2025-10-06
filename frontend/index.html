@@ -1,22 +1,31 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
-    <!-- Character encoding for international characters -->
     <meta charset="UTF-8" />
-
-    <!-- Ensures proper rendering and touch zooming on mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Favicon displayed in the browser tab -->
+    <!-- Tell browsers we support both color schemes -->
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- Set initial theme ASAP (no flash of wrong colors) -->
+    <script>
+      (function () {
+        try {
+          const stored = localStorage.getItem('theme');
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const theme = stored || (prefersDark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
+
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <!-- Title of the web application -->
     <title>Roller Platform</title>
   </head>
   <body>
-    <!-- React will render the app inside this container -->
     <div id="root"></div>
-
-    <!-- Entry point for the React app compiled by Vite -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

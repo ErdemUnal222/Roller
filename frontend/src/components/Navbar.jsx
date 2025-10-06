@@ -1,102 +1,208 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { logout } from '../redux/userSlice';
-import '../styles/main.scss';
+// /src/components/Navbar.jsx
+import { useMemo, useState } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import ThemeToggle from "./ThemeToggle";
+import api from "/src/api/axios";
+import { setUser, setToken } from "/src/redux/userSlice";
+import { clearCart } from "/src/redux/cartSlice";
 
-const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
+function Avatar({ user }) {
+  const initials = useMemo(() => {
+    if (!user?.firstName && !user?.lastName) return "U";
+    const f = (user?.firstName || "").charAt(0).toUpperCase();
+    const l = (user?.lastName || "").charAt(0).toUpperCase();
+    return `${f}${l}` || "U";
+  }, [user]);
 
-function Navbar() {
-  const user = useSelector((state) => state.user.user);
-  const token = useSelector((state) => state.user.token);
-  const cartItems = useSelector((state) => state.cart.items);
-  const dispatch = useDispatch();
+  if (user?.avatarUrl) {
+    return (
+      <img
+        className="navbar-avatar"
+        src={user.avatarUrl}
+        alt={`${user.firstName} ${user.lastName}`}
+      />
+    );
+  }
+  return (
+    <span className="navbar-avatar-placeholder" aria-hidden="true">
+      {initials}
+    </span>
+  );
+}
+
+export default function Navbar() {
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const dispatch = useDispatch();
 
-  const isLoggedIn = !!token;
-  const isAdmin = user?.role?.toLowerCase() === 'admin';
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const user = useSelector((s) => s.user.user);
+  const cartCount =
+    useSelector((s) => s.cart.items)?.reduce((n, i) => n + i.quantity, 0) || 0;
+
+  // Base links visible to everyone
+  const baseLinks = [
+    { to: "/", label: "Home" },
+    { to: "/events", label: "Events" },
+    { to: "/shop", label: "Shop" },
+  ];
+
+  // If logged in, append Availability
+  const navLinks = user
+    ? [...baseLinks, { to: "/availability", label: "Availability" }]
+    : baseLinks;
 
   const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
+    dispatch(clearCart());
+    dispatch(setUser(null));
+    dispatch(setToken(null));
+    delete api.defaults.headers.common["Authorization"];
+    localStorage.removeItem("user");
+    setOpen(false);
+    navigate("/login");
   };
 
   return (
     <header className="navbar" role="banner">
       <div className="navbar-container">
-        <Link to="/" className="navbar-brand" aria-label="Homepage">
-          Roller
+        {/* Brand */}
+        <Link to="/" className="navbar-brand" aria-label="Go to homepage">
+          Roller Derby
         </Link>
 
+        {/* Mobile menu toggle */}
         <button
-          className="navbar-toggle"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={menuOpen}
+          type="button"
+          className={`navbar-toggle ${open ? "open" : ""}`}
+          aria-label="Toggle navigation"
+          aria-controls="navbar-menu"
+          aria-expanded={open ? "true" : "false"}
+          onClick={() => setOpen((v) => !v)}
         >
-          ☰
+          <span></span>
         </button>
 
-        <nav className={`navbar-menu ${menuOpen ? 'open' : ''}`} role="navigation" aria-label="Main navigation">
-          <div className="navbar-section left">
-            <Link to="/" className="navbar-link">Home</Link>
-            <Link to="/events" className="navbar-link">Events</Link>
-            <Link to="/shop" className="navbar-link">Products</Link>
-
-            {isAdmin && (
-              <div className="navbar-admin" aria-label="Admin Panel Links">
-                <span className="admin-label">Admin Panel</span>
-                <Link to="/dashboard" className="navbar-link">Dashboard</Link>
-                <Link to="/admin/products" className="navbar-link">Manage Products</Link>
-                <Link to="/admin/products/add" className="navbar-link">Add Product</Link>
-                <Link to="/admin/events" className="navbar-link">Manage Events</Link>
-                <Link to="/admin/messages" className="navbar-link">Delete Messages</Link>
-              </div>
-            )}
+        {/* Menu */}
+        <nav
+          id="navbar-menu"
+          className={`navbar-menu ${open ? "open" : ""}`}
+          aria-label="Main"
+        >
+          {/* Left: primary links */}
+          <div className="navbar-section left" onClick={() => setOpen(false)}>
+            {navLinks.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className="navbar-link"
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </NavLink>
+            ))}
           </div>
 
+          {/* Right: actions */}
           <div className="navbar-section right">
-            {!isAdmin && (
-              <Link to="/cart" className="navbar-link cart" aria-label={`Cart with ${cartCount} items`}>
-                Cart
+            <ThemeToggle />
+
+            {/* Cart */}
+            <Link
+              to="/cart"
+              className="button"
+              title="Cart"
+              aria-label={`Cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
+              onClick={() => setOpen(false)}
+            >
+              <span className="cart" style={{ position: "relative" }}>
+                🛒
                 {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
-              </Link>
-            )}
+              </span>
+            </Link>
 
-            {isLoggedIn ? (
+            {/* Auth / Profile */}
+            {!user ? (
               <>
-                {!isAdmin && (
-                  <>
-                    <Link to="/messages" className="navbar-link">Messages</Link>
-                    <Link to="/availability" className="navbar-link">Availability</Link>
-                  </>
-                )}
-
-                <Link to="/profile" className="navbar-link profile-link">
-                  {user?.picture ? (
-                    <img
-                      src={`${BASE_URL}/uploads/${user.picture}?t=${Date.now()}`}
-                      alt={`Avatar of ${user?.firstName || 'user'}`}
-                      className="navbar-avatar"
-                    />
-                  ) : (
-                    <span className="navbar-avatar-placeholder">
-                      {user?.firstName?.[0] || 'U'}
-                    </span>
-                  )}
-                  Profile
+                <Link
+                  to="/login"
+                  className="button button--ghost"
+                  onClick={() => setOpen(false)}
+                >
+                  Login
                 </Link>
-
-                <button onClick={handleLogout} className="navbar-button" aria-label="Logout">
-                  Logout
-                </button>
+                <Link
+                  to="/register"
+                  className="button button--primary"
+                  onClick={() => setOpen(false)}
+                >
+                  Sign up
+                </Link>
               </>
             ) : (
               <>
-                <Link to="/register" className="navbar-link">Register</Link>
-                <Link to="/login" className="navbar-link">Login</Link>
+                {/* Messages */}
+                <Link
+                  to="/messages"
+                  className="button button--ghost"
+                  onClick={() => setOpen(false)}
+                >
+                  Messages
+                </Link>
+
+                {/* Profile */}
+                <Link
+                  to="/profile"
+                  className="profile-link"
+                  onClick={() => setOpen(false)}
+                >
+                  <Avatar user={user} />
+                  <span>{user.firstName}</span>
+                </Link>
+
+                {/* Logout */}
+                <button
+                  type="button"
+                  className="button button--danger"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+
+                {/* Admin shortcuts */}
+                {user.role === "admin" && (
+                  <div className="navbar-admin" aria-label="Admin shortcuts">
+                    <span className="admin-label">Admin</span>
+                    {/* Replaced Users with Dashboard */}
+                    <Link
+                      to="/dashboard"
+                      className="button button--ghost"
+                      onClick={() => setOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/admin/events"
+                      className="button button--ghost"
+                      onClick={() => setOpen(false)}
+                    >
+                      Events
+                    </Link>
+                    <Link
+                      to="/admin/products"
+                      className="button button--ghost"
+                      onClick={() => setOpen(false)}
+                    >
+                      Products
+                    </Link>
+                    <Link
+                      to="/admin/orders"
+                      className="button button--ghost"
+                      onClick={() => setOpen(false)}
+                    >
+                      Orders
+                    </Link>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -105,5 +211,3 @@ function Navbar() {
     </header>
   );
 }
-
-export default Navbar;

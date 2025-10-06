@@ -1,55 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import api from '../../api/axios';
 import Conversation from './Conversation';
 import MessageInput from './MessageInput';
-import "/src/styles/main.scss";
+import '/src/styles/main.scss';
 
 /**
- * MessagesPage Component
- * Displays a chat interface between two users.
- * Loads previous messages, marks them as read, and allows sending new messages.
+ * MessagesPage — polished chat layout
+ * - Sticky header/back link
+ * - Scrollable conversation area with skeletons
+ * - Sticky input bar
+ * - Better error/empty states
  */
-function MessagesPage() {
-  const { userId1, userId2 } = useParams(); // From the route URL, e.g., /messages/:userId1/:userId2
-  const reduxUser = useSelector((state) => state.user.user);
-  const currentUserId = reduxUser?.id;
+export default function MessagesPage() {
+  const { userId1, userId2 } = useParams();
+  const reduxUser = useSelector((s) => s.user.user);
+  const currentUserId = reduxUser?.id ?? null;
 
-  // Parse IDs from URL
-  const routeId1 = parseInt(userId1, 10);
-  const routeId2 = parseInt(userId2, 10);
+  // Normalize params
+  const routeId1 = Number.isFinite(Number(userId1)) ? Number(userId1) : null;
+  const routeId2 = Number.isFinite(Number(userId2)) ? Number(userId2) : null;
 
-  // Determine the receiver: the other user in the conversation
-  const receiverId = routeId1 === currentUserId ? routeId2 : routeId1;
+  // Determine the counterpart (the other participant)
+  const receiverId = useMemo(() => {
+    if (!currentUserId || !routeId1 || !routeId2) return null;
+    return routeId1 === currentUserId ? routeId2 : routeId1;
+  }, [currentUserId, routeId1, routeId2]);
 
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState('');
 
-  /**
-   * useEffect to load messages and mark them as read when component mounts or user IDs change.
-   */
   useEffect(() => {
-    let didCancel = false;
+    let cancel = false;
 
     const fetchMessages = async () => {
       if (!currentUserId || !receiverId) return;
       try {
-        const res = await api.get(`/messages/${currentUserId}/${receiverId}`);
-        if (!didCancel) {
-          setMessages(res.data.result || []);
-          setError('');
-        }
+        setLoading(true);
+        setError('');
+        const { data } = await api.get(`/messages/${currentUserId}/${receiverId}`);
+        if (!cancel) setMessages(Array.isArray(data?.result) ? data.result : []);
       } catch (err) {
-        if (!didCancel) {
-          console.error("Error fetching messages:", err);
-          setError('Failed to load conversation.');
+        if (!cancel) {
+          console.error('Error fetching messages:', err);
+          const msg = err?.response?.data?.message || 'Failed to load conversation.';
+          setError(msg);
         }
       } finally {
-        if (!didCancel) {
-          setLoading(false);
-        }
+        if (!cancel) setLoading(false);
       }
     };
 
@@ -61,62 +61,68 @@ function MessagesPage() {
           otherUserId: receiverId,
         });
       } catch (err) {
-        console.error(" Failed to mark messages as read:", err);
+        console.warn('Mark-as-read failed:', err?.response?.data?.message || err?.message);
       }
     };
 
     fetchMessages();
     markAsRead();
 
-    return () => {
-      didCancel = true; // Prevent state update if component unmounts
-    };
+    return () => { cancel = true; };
   }, [currentUserId, receiverId]);
 
-  /**
-   * Callback triggered after a message is successfully sent.
-   * Re-fetches the conversation to include the new message.
-   */
   const handleMessageSent = async () => {
+    // brief delay for smoother UX and DB write
+    await new Promise(r => setTimeout(r, 250));
     try {
-      await new Promise(resolve => setTimeout(resolve, 300)); // Slight delay for UX smoothness
-      const res = await api.get(`/messages/${currentUserId}/${receiverId}`);
-      setMessages(res.data.result || []);
+      const { data } = await api.get(`/messages/${currentUserId}/${receiverId}`);
+      setMessages(Array.isArray(data?.result) ? data.result : []);
     } catch (err) {
-      console.error("Refresh after send failed:", err);
+      console.error('Refresh after send failed:', err);
     }
   };
 
-  // Show loading state if current user data is not available yet
   if (!currentUserId) {
-    return <p className="messages-loading">Loading user info...</p>;
+    return <div className="chat-shell"><div className="chat-empty">Loading user…</div></div>;
   }
 
+  const titleText = receiverId ? `Conversation with #${receiverId}` : 'Conversation';
+
   return (
-    <div className="messages-page" role="main" aria-labelledby="messages-title">
-      {/* Header with back link */}
-      <header className="messages-header">
-        <Link to="/messages" className="back-link" aria-label="Back to message inbox">
-          ← Back to inbox
-        </Link>
-        <h1 id="messages-title" className="visually-hidden">Conversation</h1>
+    <div className="chat-shell" role="main" aria-labelledby="messages-title">
+      {/* Header */}
+      <header className="chat-header">
+        <div className="chat-header-left">
+          <Link to="/messages" className="chat-back" aria-label="Back to inbox">← Back</Link>
+          <h1 id="messages-title" className="chat-title">{titleText}</h1>
+        </div>
       </header>
 
-      {/* Conversation body */}
-      <section className="messages-body">
-        {error && <p className="messages-error" role="alert">{error}</p>}
+      {/* Body */}
+      <section className="chat-body" aria-live="polite">
+        {error && (
+          <div className="chat-banner error" role="alert">
+            {error}
+          </div>
+        )}
 
         {loading ? (
-          <p className="messages-loading">Loading conversation...</p>
+          <div className="chat-skeletons">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className={`sk-row ${i % 2 ? 'right' : 'left'}`}>
+                <div className="sk-bubble" />
+              </div>
+            ))}
+          </div>
         ) : messages.length === 0 ? (
-          <p className="messages-empty">No messages yet. Start the conversation below.</p>
+          <div className="chat-empty">No messages yet. Start the conversation below.</div>
         ) : (
           <Conversation messages={messages} currentUserId={currentUserId} />
         )}
       </section>
 
-      {/* Input area for sending messages */}
-      <footer className="messages-input">
+      {/* Composer */}
+      <footer className="chat-input">
         <MessageInput
           senderId={currentUserId}
           receiverId={receiverId}
@@ -127,4 +133,3 @@ function MessagesPage() {
   );
 }
 
-export default MessagesPage;

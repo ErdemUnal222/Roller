@@ -1,85 +1,68 @@
 // /src/api/axios.js
 import axios from 'axios';
 
-// -----------------------------------------------------------
-// 1. CREATE CUSTOM AXIOS INSTANCE
-// -----------------------------------------------------------
+// Base API URL — must include /api/v1 if that's how your backend is structured
+// Example .env: VITE_API_BASE_URL="http://ihsanerdemunal.ide.3wa.io:9500/api/v1"
+const baseURL = import.meta.env.VITE_API_BASE_URL;
 
-// Read base URL from environment variables provided by Vite
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL,
+  withCredentials: false,
 });
 
-// -----------------------------------------------------------
-// 2. ADD TOKEN TO EVERY REQUEST (AUTHENTICATION)
-// -----------------------------------------------------------
+// Automatically attach JWT + handle FormData headers
 api.interceptors.request.use(
   (config) => {
-    const storedUser = localStorage.getItem('user');
-    let token;
-
-    try {
-      const parsedUser = JSON.parse(storedUser);
-      token = parsedUser?.token;
-    } catch (err) {
-      console.warn("⚠️ Could not parse user from localStorage:", err);
+    // Get token from localStorage (stored as part of "user" object)
+    let token = null;
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        token = parsed?.token || null;
+      } catch {
+        // ignore parse error
+      }
     }
 
-    // ✅ Attach token if available
+    // Fallback if token is stored separately
+    if (!token) {
+      token = localStorage.getItem('token');
+    }
+
+    // Attach Authorization header if token exists
     if (token) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
-if (import.meta.env.DEV) {
-        console.log(
-          "✅ Token attached to request:",
-          config.headers.Authorization
-        );
-      }    } else {
-      console.warn("❌ No token found, Authorization header not attached.");
+    }
+
+    // Let Axios set Content-Type automatically for FormData
+    if (config.data instanceof FormData) {
+      if (config.headers['Content-Type']) {
+        delete config.headers['Content-Type'];
+      }
     }
 
     return config;
   },
-  (error) => {
-    console.error('Axios request error:', error);
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// -----------------------------------------------------------
-// 3. HANDLE RESPONSES AND ERRORS CENTRALLY
-// -----------------------------------------------------------
+// Optional: normalize error messages from the server
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    let formattedMessage = "An unexpected error occurred.";
-
+    let formattedMessage = 'Request failed.';
     if (error.response) {
-      const status = error.response.status;
-      const message =
-        typeof error.response.data === 'string'
-          ? error.response.data
-          : error.response.data?.message;
-
-      if (message) formattedMessage = message;
-
-      if (status === 401) {
-        console.warn('🔒 Unauthorized. Redirecting to login...');
-        localStorage.clear();
-        window.location.href = '/login';
-      } else if (status === 403) {
-        console.warn('⛔ Forbidden. Redirecting to unauthorized page...');
-        window.location.href = '/unauthorized';
-      }
+      const { status, data } = error.response;
+      if (status === 401) formattedMessage = data?.message || 'Unauthorized.';
+      else if (status === 403) formattedMessage = data?.message || 'Forbidden.';
+      else formattedMessage = data?.message || data?.error || `HTTP ${status}`;
     } else if (error.request) {
-      formattedMessage = "No response from the server.";
+      formattedMessage = 'No response from the server.';
     } else {
       formattedMessage = error.message;
     }
-
     error.formattedMessage = formattedMessage;
     return Promise.reject(error);
   }

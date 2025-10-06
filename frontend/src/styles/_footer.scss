@@ -1,18 +1,36 @@
 @use './variables' as *;
 
+/* Screen-reader only helper */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 .app-footer {
-  background-color: #111827;
-  color: #d1d5db;
+  background-color: var(--card);
+  color: var(--text);
   padding: 3rem 1.5rem 2rem;
-  font-family: 'Inter', 'Roboto', sans-serif;
+  font-family: var(--font-ui, 'Inter', 'Roboto', sans-serif);
+  border-top: 1px solid var(--border);
 
   a {
-    transition: color 0.2s ease-in-out;
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
     outline: none;
 
+    &:hover { color: var(--accent); }
     &:focus-visible {
-      outline: 2px solid #3b82f6;
-      outline-offset: 2px;
+      outline: none;
+      box-shadow: var(--focus-ring, 0 0 0 3px rgba(59,130,246,.25));
+      border-radius: var(--radius-sm, .375rem);
     }
   }
 
@@ -36,20 +54,21 @@
     }
   }
 
+  /* Newsletter */
   .footer-newsletter {
     flex: 1;
 
-    h2,
-    h3 {
-      font-family: 'Poppins', sans-serif;
+    h2, h3 {
+      font-family: 'Poppins', var(--font-ui, system-ui);
       font-size: clamp(1.25rem, 2.5vw, 1.5rem);
       font-weight: 600;
       margin-bottom: 0.75rem;
+      color: var(--text);
     }
 
     p {
       font-size: 0.95rem;
-      color: #9ca3af;
+      color: var(--text-muted, var(--text));
       margin-bottom: 1rem;
     }
 
@@ -65,53 +84,56 @@
       input {
         flex: 1;
         padding: 0.75rem 1rem;
-        border: 1px solid #4b5563;
-        border-radius: 0.5rem;
-        background-color: #1f2937;
-        color: #f9fafb;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md, .75rem);
+        background-color: var(--input-bg, var(--bg));
+        color: var(--input-text, var(--text));
         font-size: 1rem;
 
         &::placeholder {
-          color: #9ca3af;
+          color: var(--text-muted, var(--text));
         }
 
         &:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+          border-color: var(--accent);
+          box-shadow: var(--focus-ring, 0 0 0 3px rgba(59,130,246,.25));
           outline: none;
         }
       }
 
       button {
         padding: 0.75rem 1.25rem;
-        background-color: #3b82f6;
-        color: #fff;
+        background-color: var(--accent);
+        color: var(--accent-contrast);
         border: none;
-        border-radius: 0.5rem;
+        border-radius: var(--radius-md, .75rem);
         font-weight: 600;
         font-size: 1rem;
         cursor: pointer;
-        transition: background-color 0.2s ease;
+        transition: filter 0.2s ease, transform .02s;
 
         &:hover,
         &:focus-visible {
-          background-color: #2563eb;
-          outline: 2px solid #2563eb;
-          outline-offset: 2px;
+          filter: brightness(1.05);
+          outline: none;
+          box-shadow: var(--focus-ring, 0 0 0 3px rgba(59,130,246,.25));
         }
+
+        &:active { transform: translateY(1px); }
       }
     }
   }
 
+  /* Links */
   .footer-links {
     flex: 1;
 
-    h2,
-    h3 {
-      font-family: 'Poppins', sans-serif;
+    h2, h3 {
+      font-family: 'Poppins', var(--font-ui, system-ui);
       font-size: clamp(1.25rem, 2.5vw, 1.5rem);
       font-weight: 600;
       margin-bottom: 0.75rem;
+      color: var(--text);
     }
 
     ul {
@@ -123,21 +145,19 @@
       gap: 0.5rem;
 
       li a {
-        color: #9ca3af;
-        text-decoration: none;
+        color: var(--text-muted, var(--text));
         font-size: 1rem;
-        transition: color 0.2s ease;
 
-        &:hover,
-        &:focus-visible {
-          color: #f3f4f6;
+        &:hover, &:focus-visible {
+          color: var(--text);
         }
       }
     }
   }
 
+  /* Bottom */
   .footer-bottom {
-    border-top: 1px solid #374151;
+    border-top: 1px solid var(--border);
     padding-top: 2rem;
     display: flex;
     flex-direction: column;
@@ -152,7 +172,7 @@
 
     .footer-copy {
       font-size: 0.875rem;
-      color: #9ca3af;
+      color: var(--text-muted, var(--text));
       text-align: center;
     }
 
@@ -162,12 +182,16 @@
 
       a {
         font-size: 1.25rem;
-        color: #9ca3af;
-        transition: color 0.2s ease;
+        color: var(--text-muted, var(--text));
 
-        &:hover,
-        &:focus-visible {
-          color: #3b82f6;
+        &:hover, &:focus-visible {
+          color: var(--accent);
+        }
+
+        svg {
+          display: block;
+          width: 1.25rem;
+          height: 1.25rem;
         }
       }
     }

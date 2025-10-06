@@ -1,19 +1,12 @@
-// /src/pages/Register.jsx
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import "/src/styles/main.scss";
 
-/**
- * Register Component
- * Allows a user to create a new account by filling out a form.
- * Submits data to the backend API, handles errors, and redirects on success.
- */
 function Register() {
-  const navigate = useNavigate(); // Hook used to redirect the user after successful registration
+  const navigate = useNavigate();
 
-  // State for each input field in the form
+  // State for each input field
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName]   = useState('');
   const [email, setEmail]         = useState('');
@@ -21,22 +14,19 @@ function Register() {
   const [address, setAddress]     = useState('');
   const [zip, setZip]             = useState('');
   const [city, setCity]           = useState('');
-
-  // State to handle error message and loading state
+  const [phone, setPhone]         = useState('');
   const [error, setError]         = useState('');
   const [loading, setLoading]     = useState(false);
 
-  /**
-   * Form submission handler
-   * Sends a POST request to the backend to create a new user account.
-   */
+  // role is fixed as 'user' (prevent admin creation from public form)
+  const role = 'user';
+
   const handleSubmit = async (e) => {
-    e.preventDefault();       // Prevent form from refreshing the page
+    e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Send user registration data to the backend API
       const response = await api.post('/register', {
         firstName,
         lastName,
@@ -45,29 +35,27 @@ function Register() {
         address,
         zip,
         city,
+        phone,
+        role
       });
 
-if (import.meta.env.DEV) {
+      if (import.meta.env.DEV) {
         console.log('Registration success:', response.data);
       }
-      // Redirect the user to the login page
+
       navigate('/login');
     } catch (err) {
       console.error('Registration failed:', err);
 
-      // Error handling based on error type
       if (err.response) {
-        // Backend returned an error message
-        setError(err.response.data?.msg || 'Registration failed.');
+        setError(err.response.data?.message || err.response.data?.msg || 'Registration failed.');
       } else if (err.request) {
-        // No response from backend
         setError('No response from server.');
       } else {
-        // Something else went wrong
         setError('Unexpected error occurred.');
       }
     } finally {
-      setLoading(false); // Remove loading state whether success or error
+      setLoading(false);
     }
   };
 
@@ -80,7 +68,6 @@ if (import.meta.env.DEV) {
       >
         <h1 id="register-title" className="form-title">Register</h1>
 
-        {/* Input for First Name */}
         <label htmlFor="firstName" className="sr-only">First Name</label>
         <input
           id="firstName"
@@ -92,7 +79,6 @@ if (import.meta.env.DEV) {
           required
         />
 
-        {/* Input for Last Name */}
         <label htmlFor="lastName" className="sr-only">Last Name</label>
         <input
           id="lastName"
@@ -104,7 +90,6 @@ if (import.meta.env.DEV) {
           required
         />
 
-        {/* Input for Email */}
         <label htmlFor="email" className="sr-only">Email</label>
         <input
           id="email"
@@ -116,7 +101,6 @@ if (import.meta.env.DEV) {
           required
         />
 
-        {/* Input for Password */}
         <label htmlFor="password" className="sr-only">Password</label>
         <input
           id="password"
@@ -128,7 +112,6 @@ if (import.meta.env.DEV) {
           required
         />
 
-        {/* Input for Address */}
         <label htmlFor="address" className="sr-only">Address</label>
         <input
           id="address"
@@ -140,7 +123,6 @@ if (import.meta.env.DEV) {
           required
         />
 
-        {/* Input for Zip Code */}
         <label htmlFor="zip" className="sr-only">Zip Code</label>
         <input
           id="zip"
@@ -152,7 +134,6 @@ if (import.meta.env.DEV) {
           required
         />
 
-        {/* Input for City */}
         <label htmlFor="city" className="sr-only">City</label>
         <input
           id="city"
@@ -164,17 +145,26 @@ if (import.meta.env.DEV) {
           required
         />
 
-        {/* Display error message if exists */}
+        <label htmlFor="phone" className="sr-only">Phone</label>
+        <input
+          id="phone"
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Phone"
+          className="form-input"
+          required
+        />
+
         {error && (
           <p className="form-error" role="alert" aria-live="assertive">
             {error}
           </p>
         )}
 
-        {/* Submit button with loading indicator */}
         <button
           type="submit"
-          className="form-button form-button-green"
+          className="button button--primary"
           disabled={loading}
           aria-disabled={loading}
         >

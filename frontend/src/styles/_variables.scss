@@ -1,34 +1,56 @@
-@use "sass:color";
-// === CSS Custom Properties (runtime accessible) ===
+/* /src/styles/_variables.scss */
+
+/* Base (dark as default) */
 :root {
-  // Brand colors
+  /* Brand */
   --accent: #3b82f6;
   --accent-hover: #2563eb;
+  --accent-contrast: #ffffff;
+
   --success: #10b981;
   --success-hover: #059669;
-  --error: #ef4444;
-  --error-hover: #dc2626;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
 
-  // Text & background
-  --text-main: #f9fafb;
-  --text-muted: #9ca3af;
-  --bg-dark: #111827;
-  --bg-light: #1f2937;
-  --border-gray: #374151;
+  /* Surfaces & text */
+  --bg: #0f172a;            /* page background (dark) */
+  --card: #111827;          /* elevated surfaces */
+  --card-2: #1f2937;        /* deeper surface */
+  --text: #f9fafb;          /* primary text */
+  --text-muted: #9ca3af;    /* secondary text */
+  --border: #2a3342;        /* borders/dividers */
+
+  /* Effects */
+  --radius-sm: .375rem;
+  --radius-md: .75rem;
+  --radius-lg: 1rem;
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,.15);
+  --shadow-2: 0 6px 20px rgba(0,0,0,.18);
+
+  --focus-ring: 0 0 0 3px rgba(59,130,246,.25);
+
+  /* Inputs */
+  --input-bg: #111827;
+  --input-text: #f9fafb;
 }
 
-// === SCSS Variables (for compile-time operations) ===
-$accent: #3b82f6;
-$accent-hover: color.adjust($accent, $lightness: -10%);
+/* Light theme override */
+[data-theme="light"] {
+  --bg: #ffffff;
+  --card: #ffffff;
+  --card-2: #f3f4f6;
+  --text: #0b1220;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --input-bg: #ffffff;
+  --input-text: #0b1220;
+  --focus-ring: 0 0 0 3px rgba(37,99,235,.25);
+}
 
-$success: #10b981;
-$success-hover: color.adjust($success, $lightness: -10%);
-
-$error: #ef4444;
-$error-hover: color.adjust($error, $lightness: -10%);
-
-$text-main: #f9fafb;
-$text-muted: #9ca3af;
-$bg-dark: #111827;
-$bg-light: #1f2937;
-$border-gray: #374151;
+/* Global defaults */
+html, body {
+  background: var(--bg);
+  color: var(--text);
+}
+a { color: var(--accent); }

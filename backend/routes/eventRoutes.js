@@ -65,7 +65,7 @@ module.exports = (parentRouter, db) => {
    * - Uploads an image for an event.
    * - No middleware applied here; could be secured if necessary.
    */
-  router.post('/events/upload', withAuthAdmin, eventController.savePicture);
+  router.post('/upload/upload', withAuthAdmin, eventController.savePicture);
 
   /**
    * PUT /events/:id

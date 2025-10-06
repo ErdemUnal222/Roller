@@ -1,36 +1,54 @@
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-dotenv.config();
 
-// Middleware to protect routes that require authentication (e.g. profile, admin)
+// tiny helpers
+const ensureSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not set'); // fail fast so you notice in dev
+  }
+  return process.env.JWT_SECRET;
+};
+
+const extractBearer = (req) => {
+  const h = req.headers['authorization'];
+  if (!h) return null;
+  // case-insensitive "Bearer "
+  if (/^Bearer\s+/i.test(h)) {
+    const token = h.replace(/^Bearer\s+/i, '').trim();
+    return token || null;
+  }
+  return null;
+};
+
 module.exports = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
+  // allow CORS preflight without auth
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
 
-  // Check if the request has an Authorization header and if it follows the "Bearer <token>" format
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ status: 401, msg: "No or malformed token provided" });
+  const token = extractBearer(req);
+  if (!token) {
+    return res.status(401).json({ status: 401, msg: 'No or malformed token provided' });
   }
 
-  // Extract the token part from the "Bearer <token>" string
-  const token = authHeader.split(' ')[1];
-
   try {
-    // Use JWT to verify and decode the token using the secret key from .env
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // Optionally log the decoded payload in non-production environments
+    const opts = { algorithms: ['HS256'] };
+    // Optional claims hardening—only enforced if you set envs
+    if (process.env.JWT_AUDIENCE) opts.audience = process.env.JWT_AUDIENCE;
+    if (process.env.JWT_ISSUER)   opts.issuer   = process.env.JWT_ISSUER;
+
+    const decoded = jwt.verify(token, ensureSecret(), opts);
+
+    // attach a minimal, immutable user object
+    req.user = Object.freeze({ id: decoded.id, role: decoded.role });
+
     if (process.env.NODE_ENV !== 'production') {
-console.log('🧩 withAuth: Token decoded', decoded);
+      // keep logs minimal; do not print full token or PII
+      console.log('withAuth OK -> user:', req.user);
     }
-
-
-    // Attach the decoded user payload to the request object so we can use it later in controllers
-    req.user = decoded;
-
-    // Move forward to the next middleware or route handler
-    next();
+    return next();
   } catch (err) {
-    // Handle token verification failure (invalid signature, expired token, etc.)
-    console.error("Invalid or expired token:", err.message);
-    return res.status(401).json({ status: 401, msg: "Invalid or expired token" });
+    // jwt.verify throws on expiration, bad sig, bad aud/iss, etc.
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('withAuth fail:', err.name);
+    }
+    return res.status(401).json({ status: 401, msg: 'Invalid or expired token' });
   }
 };
