@@ -1,29 +1,40 @@
-# Roller
+# Roller Derby Community Platform
 
-Roller Derby is a full-stack platform built for the roller derby community.  
-It helps **players, clubs, and organizers** manage events, track availability, exchange messages, and even run a small e-commerce shop for products and memorabilia.
+Full-stack web application built for the roller derby community.
 
-The project is split into two main parts:
+This project allows users to create accounts, manage events, register for activities, exchange private messages, and access a small e-commerce area for products and memorabilia.
 
-- **`backend/`** – Node.js + Express API with MySQL, JWT authentication, and Stripe payments.
-- **`frontend/`** – React application bootstrapped with Vite and styled with SCSS.
+## Tech Stack
 
----
+### Frontend
+- React
+- Vite
+- SCSS
+- Redux
 
-## 🚀 Quickstart
+### Backend
+- Node.js
+- Express
+- MySQL
+- JWT Authentication
+- Stripe
+
+## Main Features
+
+- User registration and login
+- Secure authentication with JWT
+- Role-based access control
+- Event creation and registration
+- Private messaging between users
+- Product management and shopping flow
+- Admin dashboard for moderation and management
+- Stripe payment integration
+
+## Project Structure
 
 ```bash
-git clone <repo-url>
-cd roller
-
-# Start backend
-cd backend
-npm install
-npm run dev   # nodemon for development
-# or
-npm start     # production mode
-
-# Start frontend (in another terminal)
-cd ../frontend
-npm install
-npm run dev
+Roller/
+├── backend/    # Node.js + Express API
+├── frontend/   # React application
+├── docs/       # architecture and database documentation
+└── README.md
