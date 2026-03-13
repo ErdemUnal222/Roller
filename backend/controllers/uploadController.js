@@ -14,7 +14,7 @@ const uploadProfilePicture = async (req, res, next) => {
     const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
 
     // Get extension in lowercase
-    const ext = path.extname(file.name).toLowerCase();0
+    const ext = path.extname(file.name).toLowerCase();
 
     if (!allowedExtensions.includes(ext) || !allowedMimeTypes.includes(file.mimetype)) {
       return next({ status: 400, message: "Invalid file type. Only JPG, PNG, and WEBP are allowed." });

@@ -71,7 +71,7 @@ const getOtherUsers = async (req, res, next) => {
 if (process.env.NODE_ENV !== 'production') {
         console.log("🔑 JWT payload before signing:", payload);
       }
-      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "24h" });
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
 
       // Return token and safe user object
       const user = {
