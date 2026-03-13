@@ -22,13 +22,12 @@ import PublicEventList from './features/events/PublicEventList';
 import EventDetails from './features/events/EventDetails';
 import CreateEvent from './features/events/CreateEvent';
 
-import ProductList from './features/products/ProductList';
 import ProductDetail from './features/products/ProductDetail';
 import Products from './features/products/Products';
 import AddProduct from './features/products/AddProduct';
 import EditProduct from './features/products/EditProduct';
 
-import Dashboard from './features/auth/Dashboard';
+import Dashboard from './features/admin/Dashboard';
 import UsersAdmin from './features/admin/UsersAdmin';
 import EventsAdmin from './features/admin/EventsAdmin';
 import DeleteMessage from './features/admin/DeleteMessage';
@@ -44,10 +43,10 @@ import Success from './features/cart/Success';
 import MessageInbox from './features/messages/MessageInbox';
 import MessagesPage from './features/messages/MessagesPage';
 
-import About from './features/pages/About';
-import Privacy from './features/pages/Privacy';
-import Terms from './features/pages/Terms';
-import Contact from './features/pages/Contact';
+import About from './pages/About';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import Contact from './pages/Contact';
 import Shop from './features/products/Shop';
 
 function App() {
