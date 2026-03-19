@@ -1,7 +1,4 @@
-// ------------------- SERVER ENTRY POINT -------------------
-if (process.env.NODE_ENV !== 'production') {
-  console.log('Server starting...');
-}
+
 
 // ------------------- DEPENDENCIES -------------------
 const express = require('express');
@@ -15,6 +12,11 @@ const errorHandler = require('./middleware/errorHandler');
 
 // Load environment variables
 dotenv.config();
+
+// ------------------- SERVER ENTRY POINT -------------------
+if (process.env.NODE_ENV !== 'production') {
+  console.log('Server starting...');
+}
 
 // ------------------- APP INIT -------------------
 const app = express();
@@ -38,16 +40,17 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin(origin, callback) {
-    console.log('Incoming Origin:', origin);
-    console.log('Allowed Origins:', allowedOrigins);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('CORS check:', origin || '[no origin]');
+  }
 
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+  if (!origin || allowedOrigins.includes(origin)) {
+    return callback(null, true);
+  }
 
-    console.log('Blocked by CORS:', origin);
-    return callback(new Error(`Not allowed by CORS: ${origin}`));
-  },
+  console.log('Blocked by CORS:', origin);
+  return callback(new Error(`Not allowed by CORS: ${origin}`));
+},
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
@@ -96,14 +99,17 @@ app.use(fileUpload({
 // Stripe webhook MUST receive RAW body. Mount this BEFORE JSON parsing.
 app.post('/api/v1/webhook/stripe', bodyParser.raw({ type: 'application/json' }), (req, res, next) => next());
 
-// For all other routes, use JSON / urlencoded, but skip the webhook path.
+const jsonParser = express.json({ limit: '200kb' });
+const urlencodedParser = express.urlencoded({ extended: false, limit: '200kb' });
+
 app.use((req, res, next) => {
   if (req.originalUrl === '/api/v1/webhook/stripe') return next();
-  return express.json({ limit: '200kb' })(req, res, next);
+  return jsonParser(req, res, next);
 });
+
 app.use((req, res, next) => {
   if (req.originalUrl === '/api/v1/webhook/stripe') return next();
-  return express.urlencoded({ extended: false, limit: '200kb' })(req, res, next);
+  return urlencodedParser(req, res, next);
 });
 
 // ------------------- STATIC FILES -------------------
@@ -142,9 +148,6 @@ app.use('/api/v1/auth/login', (req, res, next) => {
     if (process.env.NODE_ENV !== 'production') {
       console.log('Connected to MySQL (pool).');
     }
-
-    // Keep-alive (optional with pools, kept for consistency)
-    setInterval(() => db.query('SELECT 1'), 10000);
 
     // ------------------- ROUTES -------------------
     app.get('/', (req, res) => {

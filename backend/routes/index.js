@@ -7,7 +7,7 @@ module.exports = (router, db) => {
   require('./authRoutes')(router, db);            // Handles login and authentication
   require('./productRoutes')(router, db);         // Handles product catalog CRUD
   require('./availabilityRoutes')(router, db);    // Handles player availabilities
-  require('./commentRoutes')(router, db); // Handles event and product comments
+  require('./commentRoutes')(router, db);         // Handles event and product comments
   require('./eventRoutes')(router, db);           // Manages all event-related routes
   require('./messageRoutes')(router, db);         // Manages user-to-user messaging
   require('./orderRoutes')(router, db);           // Handles shopping and order history
