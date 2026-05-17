@@ -39,7 +39,15 @@ class OrderModel {
   async getAllOrders() {
     try {
       const rows = await this.db.query(
-        `SELECT * FROM orders ORDER BY created_at DESC`
+        `SELECT 
+  users.firstName, 
+  users.lastName,
+  orders.id,
+  orders.total,
+  orders.status
+FROM orders
+JOIN users ON orders.users_id = users.id
+ORDER BY orders.created_at DESC`
       );
       // rows is an array of rows
       return rows;
