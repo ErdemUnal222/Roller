@@ -9,7 +9,9 @@ function errorHandler(err, req, res, next) {
   const status = err.status || 500;
 
   // Extract a readable error message, or fallback to a generic one
-  const message = err.message || "Internal Server Error";
+  const message = process.env.NODE_ENV === 'production' && status >= 500
+  ? 'Internal Server Error'
+  : err.message || 'Internal Server Error';
 
   // Respond to the client with a consistent error object
   res.status(status).json({

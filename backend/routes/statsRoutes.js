@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // Middleware to protect routes — only logged-in users can access stats
-const withAuth = require('../middleware/withAuth');
+const withAuthAdmin = require('../middleware/withAuthAdmin');
 
 // Import the controller factory for stats
 const statsControllerFactory = require('../controllers/statsController');
@@ -21,7 +21,7 @@ module.exports = (parentRouter, db) => {
    * Returns platform-wide KPIs: user count, event count, product count, orders, and total revenue.
    * Only accessible by authenticated users (admin or staff).
    */
-  router.get('/stats/overview', withAuth, statsController.getOverviewStats);
+  router.get('/stats/overview', withAuthAdmin, statsController.getOverviewStats);
 
   // Attach these routes to the main application router
   parentRouter.use('/', router);

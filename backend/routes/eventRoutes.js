@@ -58,12 +58,11 @@ module.exports = (parentRouter, db) => {
    * - Protected route: Creates a new event.
    * - Typically used by admin or event organizer.
    */
-  router.post('/events', withAuth, eventController.saveEvent);
+  router.post('/events', withAuthAdmin, eventController.saveEvent);
 
   /**
    * POST /events/upload
    * - Uploads an image for an event.
-   * - No middleware applied here; could be secured if necessary.
    */
   router.post('/upload/upload', withAuthAdmin, eventController.savePicture);
 
@@ -72,14 +71,14 @@ module.exports = (parentRouter, db) => {
    * - Protected route: Updates an existing event.
    * - Can modify event title, date, description, etc.
    */
-  router.put('/events/:id', withAuth, eventController.updateEvent);
+  router.put('/events/:id', withAuthAdmin, eventController.updateEvent);
 
   /**
    * DELETE /events/:id
    * - Protected route: Deletes an event by its ID.
    * - Only authorized users should be able to perform this action.
    */
-  router.delete('/events/:id', withAuth, eventController.deleteEvent);
+  router.delete('/events/:id', withAuthAdmin, eventController.deleteEvent);
 
   // Register this sub-router into the main application router
   parentRouter.use('/', router);

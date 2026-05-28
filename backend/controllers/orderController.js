@@ -130,10 +130,14 @@ module.exports = (OrderModel, OrderDetailsModel, ProductModel) => {
       // (For stronger security, fetch prices from DB and ignore client prices.)
       let totalProducts = 0;
       let totalAmount = 0;
-
+const verifiedItems = [];
       for (const it of items) {
+       const product = await ProductModel.getOneProduct(it.id);
+if (!product) {
+  return next({ status: 400, message: "Product not found: " + it.id });
+}
         const qty = Number(it.quantity);
-        const price = Number(it.price);
+        const price = Number(product.price);
         if (
           !Number.isFinite(qty) || qty <= 0 ||
           !Number.isFinite(price) || price <= 0
@@ -142,6 +146,7 @@ module.exports = (OrderModel, OrderDetailsModel, ProductModel) => {
         }
         totalProducts += qty;
         totalAmount += price * qty;
+        verifiedItems.push({ ...it, price, qty });
       }
 
       // 1) Create local order (pending)
@@ -152,7 +157,7 @@ module.exports = (OrderModel, OrderDetailsModel, ProductModel) => {
       if (!orderId) return next({ status: 500, message: "Failed to create order" });
 
       // 2) Save order details
-      const detailResult = await OrderDetailsModel.addOrderDetails(orderId, items);
+      const detailResult = await OrderDetailsModel.addOrderDetails(orderId,verifiedItems);
       if (detailResult?.code) return next({ status: 500, message: "Error saving order details" });
 
       // 3) Decrement stock (best-effort; log problems but continue)
@@ -170,15 +175,14 @@ module.exports = (OrderModel, OrderDetailsModel, ProductModel) => {
       }
 
       // 4) Prepare Stripe line_items (use server-validated values)
-      const line_items = items.map((item) => ({
-        price_data: {
-          currency: "eur",
-          product_data: { name: item.name || `Item ${item.productId}` },
-          unit_amount: Math.round(Number(item.price) * 100), // cents
-        },
-        quantity: Number(item.quantity),
-      }));
-
+      const line_items = verifiedItems.map((item) => ({
+  price_data: {
+    currency: "eur",
+    product_data: { name: item.name || `Item ${item.id}` },
+    unit_amount: Math.round(item.price * 100),
+  },
+  quantity: item.qty,
+}));
       // 5) Create Stripe Checkout Session
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
