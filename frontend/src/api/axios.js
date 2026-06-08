@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Base API URL — must include /api/v1 if that's how your backend is structured
 // Example .env: VITE_API_BASE_URL="http://ihsanerdemunal.ide.3wa.io:9500/api/v1"
-const baseURL = import.meta.env.VITE_API_BASE_URL;
+baseURL: import.meta.env.VITE_API_URL
 
 const api = axios.create({
   baseURL,
