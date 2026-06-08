@@ -1,10 +1,9 @@
 // /src/api/axios.js
 import axios from 'axios';
 
-// Base API URL — must include /api/v1 if that's how your backend is structured
-// Example .env: VITE_API_BASE_URL="http://ihsanerdemunal.ide.3wa.io:9500/api/v1"
+// Base API URL — must include /api/v1
+// Netlify env var MUST be named exactly VITE_API_URL to match the line below.
 const baseURL = import.meta.env.VITE_API_URL;
-const api = axios.create({ baseURL });
 
 const api = axios.create({
   baseURL,
@@ -14,7 +13,6 @@ const api = axios.create({
 // Automatically attach JWT + handle FormData headers
 api.interceptors.request.use(
   (config) => {
-    // Get token from localStorage (stored as part of "user" object)
     let token = null;
     const stored = localStorage.getItem('user');
     if (stored) {
@@ -25,31 +23,23 @@ api.interceptors.request.use(
         // ignore parse error
       }
     }
-
-    // Fallback if token is stored separately
     if (!token) {
       token = localStorage.getItem('token');
     }
-
-    // Attach Authorization header if token exists
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
-
-    // Let Axios set Content-Type automatically for FormData
     if (config.data instanceof FormData) {
       if (config.headers['Content-Type']) {
         delete config.headers['Content-Type'];
       }
     }
-
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Optional: normalize error messages from the server
 api.interceptors.response.use(
   (response) => response,
   (error) => {
