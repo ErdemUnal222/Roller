@@ -137,13 +137,14 @@ app.use('/api/v1/auth/login', (req, res, next) => {
 (async () => {
   try {
     const db = await mysql.createPool({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      connectionLimit: 10,
-      timezone: 'Z',
-    });
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+  connectionLimit: 10,
+  timezone: "Z",
+});
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('Connected to MySQL (pool).');
