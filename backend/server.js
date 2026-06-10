@@ -2,7 +2,7 @@
 
 // ------------------- DEPENDENCIES -------------------
 const express = require('express');
-const mysql = require('promise-mysql');     
+const mysql = require('mysql2/promise');     
 const fileUpload = require('express-fileupload');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -136,7 +136,7 @@ app.use('/api/v1/auth/login', (req, res, next) => {
 // ------------------- DATABASE CONNECTION (POOL) -------------------
 (async () => {
   try {
-    const db = await mysql.createPool({
+   const db = mysql.createPool({
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
   user: process.env.DB_USER,

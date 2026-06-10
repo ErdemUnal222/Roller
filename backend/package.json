@@ -19,8 +19,8 @@
     "express": "^4.21.2",
     "express-fileupload": "^1.5.1",
     "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.22.5",
     "ngrok": "^5.0.0-beta.2",
-    "promise-mysql": "^5.2.0",
     "stripe": "^17.7.0",
     "tree": "^0.1.3"
   },
