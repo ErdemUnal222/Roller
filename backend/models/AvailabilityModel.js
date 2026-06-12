@@ -88,7 +88,7 @@ class AvailabilityModel {
   async getAllAvailabilities() {
     try {
       const sql = `SELECT * FROM availability ORDER BY start_date ASC, end_date ASC`;
-      const rows = await this.db.query(sql);
+      const [rows] = await this.db.query(sql);
       return rows;
     } catch (err) {
       console.error("Error getting availabilities:", err);
@@ -103,7 +103,7 @@ class AvailabilityModel {
         WHERE user_id = ?
         ORDER BY start_date ASC, end_date ASC
       `;
-      const rows = await this.db.query(sql, [userId]);
+      const [rows] = await this.db.query(sql, [userId]);
       return rows;
     } catch (err) {
       console.error("Error getting user availabilities:", err);
@@ -114,7 +114,7 @@ class AvailabilityModel {
   async getOneById(id) {
     try {
       const sql = `SELECT * FROM availability WHERE id = ? LIMIT 1`;
-      const rows = await this.db.query(sql, [id]);
+      const [rows] = await this.db.query(sql, [id]);
       // support mysql2 (returns [rows]) vs promise-mysql (returns rows)
       const list = Array.isArray(rows) && Array.isArray(rows[0]) ? rows[0] : rows;
       return Array.isArray(list) ? list[0] : list;

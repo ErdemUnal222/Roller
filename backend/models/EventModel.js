@@ -6,7 +6,7 @@ class EventModel {
 
   // READ: Retrieve all events from the database (e.g. for public display or admin panel)
   async getAllEvents() {
-    const rows = await this.db.query("SELECT * FROM events");
+    const [rows] = await this.db.query("SELECT * FROM events");
 if (process.env.NODE_ENV !== 'production') {
       console.log("All events from DB:", rows); // Optional debug log for dev testing
     }    return rows; // Return all events as an array
@@ -15,7 +15,7 @@ if (process.env.NODE_ENV !== 'production') {
   // READ: Retrieve a specific event by its ID
   async getOneEvent(id) {
     try {
-      const rows = await this.db.query("SELECT * FROM events WHERE id = ?", [id]);
+      const [rows] = await this.db.query("SELECT * FROM events WHERE id = ?", [id]);
       return rows[0]; // Return the first result (or undefined if not found)
     } catch (err) {
       throw err; // Let the controller deal with any error
@@ -94,7 +94,7 @@ if (process.env.NODE_ENV !== 'production') {
   // RELATION: Check if a user is already registered for an event
   async checkUserRegistration(userId, eventId) {
     try {
-      const rows = await this.db.query(
+      const [rows] = await this.db.query(
         "SELECT 1 FROM users_events WHERE user_id = ? AND event_id = ? LIMIT 1",
         [userId, eventId]
       );

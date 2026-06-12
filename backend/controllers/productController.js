@@ -49,24 +49,32 @@ module.exports = (ProductModel) => {
       }
 
       res.status(201).json({
-        status: 201,
-        msg: "Product saved successfully!",
-        id: product.id,
-      });
+  status: 201,
+  data: {
+    id: product.id
+  }
+});
     } catch (err) {
       next(err);
     }
   };
 
   // Retrieves all products from the database
-  const getAllProducts = async (req, res, next) => {
-    try {
-      const products = await ProductModel.getAllProducts();
-      res.status(200).json({ status: 200, result: products });
-    } catch (err) {
-      next(err);
-    }
-  };
+const getAllProducts = async (req, res, next) => {
+  try {
+    const products = await ProductModel.getAllProducts();
+
+    res.status(200).json({
+      status: 200,
+      data: products,
+      meta: {
+        total: products.length
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
   // Retrieves a single product by its ID
   const getOneProduct = async (req, res, next) => {
@@ -78,7 +86,10 @@ module.exports = (ProductModel) => {
         return res.status(404).json({ status: 404, message: "Product not found" });
       }
 
-      res.status(200).json({ status: 200, result: product });
+      res.status(200).json({
+  status: 200,
+  data: product
+});
     } catch (err) {
       next(err);
     }

@@ -40,7 +40,7 @@ class ProductModel {
    */
   async getAllProducts() {
     try {
-      const rows = await this.db.query('SELECT * FROM products ORDER BY id ASC');
+      const [rows] = await this.db.query('SELECT * FROM products ORDER BY id ASC');
       return rows;
     } catch (err) {
       console.error("Error in getAllProducts:", err);
@@ -54,7 +54,7 @@ class ProductModel {
    */
   async getOneProduct(id) {
     try {
-      const rows = await this.db.query('SELECT * FROM products WHERE id = ?', [id]);
+      const [rows] = await this.db.query('SELECT * FROM products WHERE id = ?', [id]);
 
       // If no product found with the given ID, return null
       if (!rows || rows.length === 0) {

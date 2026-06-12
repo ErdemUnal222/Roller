@@ -13,7 +13,7 @@ class MessageModel {
   // READ: Fetch all messages in the system (admin view or moderation)
   async getAllMessages() {
     try {
-      const rows = await this.db.query(
+      const [rows] = await this.db.query(
         `SELECT 
            m.id,
            m.sender_id,
@@ -53,7 +53,7 @@ class MessageModel {
   // READ: Fetch full conversation between two users (chronologically sorted)
   async getMessagesBetweenUsers(user1Id, user2Id) {
     try {
-      const rows = await this.db.query(
+      const [rows] = await this.db.query(
         `SELECT 
            m.id,
            m.sender_id,
@@ -193,7 +193,7 @@ class MessageModel {
   // READ: Admin fetch full conversation between two users
   async adminGetConversation(user1Id, user2Id) {
     try {
-      const rows = await this.db.query(
+      const [rows] = await this.db.query(
         `SELECT 
            m.id,
            m.sender_id,

@@ -38,7 +38,7 @@ class OrderModel {
   // READ (admin)
   async getAllOrders() {
     try {
-      const rows = await this.db.query(
+      const [rows] = await this.db.query(
         `SELECT 
   users.firstName, 
   users.lastName,
@@ -60,7 +60,7 @@ ORDER BY orders.created_at DESC`
   // READ (by user)
   async getOrdersByUserId(userId) {
     try {
-      const rows = await this.db.query(
+      const [rows] = await this.db.query(
         `SELECT * FROM orders WHERE users_id = ? ORDER BY created_at DESC`,
         [userId]
       );
@@ -74,7 +74,7 @@ ORDER BY orders.created_at DESC`
   // READ (one)
   async getOneOrder(orderId) {
     try {
-      const rows = await this.db.query(
+      const [rows] = await this.db.query(
         `SELECT * FROM orders WHERE id = ?`,
         [orderId]
       );

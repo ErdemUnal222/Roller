@@ -5,7 +5,7 @@ class UserModel {
 
   async saveOneUser(userData) {
     try {
-      const result = await this.db.query(
+      const [result] = await this.db.query(
         `INSERT INTO users (
             firstName, lastName, email, password, created_at,
             address, zip, city, phone, role
@@ -36,7 +36,7 @@ class UserModel {
 
   async getUserByEmail(email) {
     try {
-      const result = await this.db.query(
+      const [result] = await this.db.query(
         `SELECT id, email, password, role, firstName, lastName, address, complement, zip, city, picture
          FROM users WHERE email = ?`,
         [email]
@@ -50,8 +50,8 @@ class UserModel {
 
   async getOneUser(id) {
     try {
-      const result = await this.db.query(
-        `SELECT id, firstName, lastName, email, address, zip, city, phone, role, picture 
+      const [result] = await this.db.query(
+        `SELECT id, firstName, lastName, email, address, zip, city, phone, role, picture
          FROM users WHERE id = ?`,
         [id]
       );
@@ -90,7 +90,7 @@ class UserModel {
       const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = ?`;
       values.push(userId);
 
-      const result = await this.db.query(sql, values);
+      const [result] = await this.db.query(sql, values);
       return result;
     } catch (err) {
       console.error("updateUser error:", err);
@@ -100,7 +100,7 @@ class UserModel {
 
   async updateConnexion(id) {
     try {
-      const result = await this.db.query(
+      const [result] = await this.db.query(
         "UPDATE users SET last_connection = NOW() WHERE id = ?", [id]
       );
       return result;
@@ -135,7 +135,7 @@ class UserModel {
 
   async getAllOtherUsers(currentUserId) {
     try {
-      const result = await this.db.query(
+      const [result] = await this.db.query(
         'SELECT id, firstName, lastName FROM users WHERE id != ? AND isDeleted = 0',
         [currentUserId]
       );
@@ -148,8 +148,8 @@ class UserModel {
 
   async getAllUsers() {
     try {
-      const result = await this.db.query(
-        `SELECT id, firstName, lastName, email, address, zip, city, phone, role 
+      const [result] = await this.db.query(
+        `SELECT id, firstName, lastName, email, address, zip, city, phone, role
          FROM users WHERE isDeleted = 0`
       );
       return result;
