@@ -20,8 +20,8 @@ function ProductDetail() {
     async function fetchProduct() {
       try {
         const data = await getOneProduct(id); // API call to get product by ID
-        if (data && data.result) {
-          setProduct(data.result); // Update state with product details
+        if (data && data.data) {
+          setProduct(data.data); // Update state with product details
         } else {
           setError('Product not found.');
         }

@@ -26,10 +26,10 @@ export default function Shop() {
         setLoading(true);
         setError('');
         const data = await getShopProducts();
-        const list = Array.isArray(data?.result) ? data.result : [];
+        const list = Array.isArray(data?.data) ? data.data : [];
         if (!cancel) {
           setProducts(list);
-          setTotal(data?.total ?? list.length);
+          setTotal(data?.meta?.total ?? list.length);
         }
       } catch (err) {
         console.error('Error fetching shop products:', err);
