@@ -13,6 +13,7 @@ function formatPrice(value) {
 }
 
 export default function Shop() {
+  const [total, setTotal] = useState(0);
   const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -26,7 +27,10 @@ export default function Shop() {
         setError('');
         const data = await getShopProducts();
         const list = Array.isArray(data?.result) ? data.result : [];
-        if (!cancel) setProducts(list);
+        if (!cancel) {
+          setProducts(list);
+          setTotal(data?.total ?? list.length);
+        }
       } catch (err) {
         console.error('Error fetching shop products:', err);
         if (!cancel) setError('Unable to load products. Please try again later.');
@@ -64,6 +68,7 @@ export default function Shop() {
               <div className="btns">
                 <span className="btn shimmer"></span>
                 <span className="btn shimmer"></span>
+                <p>{total} products</p>
               </div>
             </div>
           ))}
