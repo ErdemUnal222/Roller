@@ -21,8 +21,10 @@ const Cart = () => {
   const cartItems = useSelector((state) => state.cart.items);
 
   // Calculate total cart price
+  // NOTE: product.price is a MySQL DECIMAL, which arrives as a STRING (e.g. "123.00").
+  // Coerce with Number() before arithmetic / .toFixed, or the cart page crashes blank.
   const total = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + Number(item.price ?? 0) * Number(item.quantity ?? 0),
     0
   );
 
@@ -60,7 +62,7 @@ const Cart = () => {
               <div>
                 {/* Product title and price */}
                 <h2 className="cart-item-title">{item.title}</h2>
-                <p className="cart-item-price">€{item.price.toFixed(2)}</p>
+                <p className="cart-item-price">€{Number(item.price ?? 0).toFixed(2)}</p>
               </div>
             </div>
 
