@@ -258,3 +258,153 @@
   background: var(--border);
   margin: 2rem 0;
 }
+
+/* ===== Admin: Manage Conversations (DeleteMessage.jsx) =====
+   These classes were used in the component but had no CSS, so the action
+   buttons collapsed onto each other and ignored the theme. Added here. */
+.admin-messages-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--pad, 1rem);
+  color: var(--text);
+
+  .admin-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+
+  .search-input {
+    width: 100%;
+    padding: .6rem .8rem;
+    margin-bottom: 1.25rem;
+    background: var(--input-bg);
+    color: var(--input-text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+
+    &:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  }
+
+  .muted { color: var(--text-muted); }
+
+  /* Shared button look for the admin tool's bare button classes */
+  .btn,
+  .btn-export,
+  .btn-delete,
+  .btn-delete-convo {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font: 600 .9rem/1 var(--font-ui, system-ui);
+    padding: .5rem .85rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--card-2);
+    color: var(--text);
+    cursor: pointer;
+    transition: filter .15s ease, transform .02s ease;
+
+    &:hover { filter: brightness(1.08); }
+    &:active { transform: translateY(1px); }
+    &:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  }
+
+  .btn-delete,
+  .btn-delete-convo {
+    background: var(--danger);
+    border-color: transparent;
+    color: var(--accent-contrast);
+  }
+}
+
+.admin-message-group {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+
+  .group-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 .75rem;
+    color: var(--text);
+  }
+}
+
+/* Button rows: flex + wrap + gap is what stops the overlap */
+.group-actions,
+.row-actions,
+.edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+}
+
+.group-actions { margin-bottom: 1rem; }
+.row-actions   { margin-top: .5rem; }
+.edit-actions  { margin-top: .5rem; }
+
+.admin-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+
+.admin-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: .75rem;
+  padding: .75rem .9rem;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+
+  .message-info {
+    flex: 1 1 60%;
+    min-width: 0;
+
+    p { margin: .15rem 0; color: var(--text); }
+    small { color: var(--text-muted); }
+  }
+
+  .edit-inline {
+    width: 100%;
+
+    textarea {
+      width: 100%;
+      padding: .5rem;
+      background: var(--input-bg);
+      color: var(--input-text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      resize: vertical;
+    }
+  }
+}
+
+.admin-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+er-radius: var(--radius-sm);
+      resize: vertical;
+    }
+  }
+}
+
+.admin-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}

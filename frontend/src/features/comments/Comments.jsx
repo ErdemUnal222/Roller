@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import {
   getCommentsByEvent,
   createComment,
@@ -18,6 +19,17 @@ function Comments() {
   // Get the event ID from the route URL (e.g., /events/123/comments → id = 123)
   const { id: eventId } = useParams();
 
+  // Current logged-in user (from Redux; same source DeleteMessage.jsx uses).
+  // Used to decide who may edit/delete a comment. The BACKEND is the real gate
+  // (owner-or-admin); this just stops showing buttons that would 403 anyway.
+  const currentUser = useSelector((s) => s.user.user);
+  const currentUserId = Number(currentUser?.id);
+  const isAdmin = currentUser?.role?.toLowerCase() === 'admin';
+
+  // Can the current user modify a given comment? Owner OR admin — mirrors the backend.
+  const canModify = (comment) =>
+    isAdmin || Number(comment?.user_id) === currentUserId;
+
   // State to hold comments and form input values
   const [comments, setComments] = useState([]); // All comments for the event
   const [content, setContent] = useState(''); // New comment input
@@ -32,7 +44,7 @@ function Comments() {
     async function fetchComments() {
       try {
         const response = await getCommentsByEvent(eventId);
-       // Ensure state always receives an array
+        // Ensure state always receives an array
         setComments(
           Array.isArray(response?.result) ? response.result : []
         );
@@ -149,8 +161,9 @@ function Comments() {
             <li key={comment.id} className="comment-item">
               <p className="comment-author">{comment.name || 'Anonymous'}</p>
 
-              {/* If editing, show editable textarea */}
-              {editingId === comment.id ? (
+              {/* Edit form shows only while THIS comment is being edited,
+                  and only if the user is allowed to modify it. */}
+              {editingId === comment.id && canModify(comment) ? (
                 <>
                   <textarea
                     className="comment-edit-input"
@@ -166,10 +179,14 @@ function Comments() {
               ) : (
                 <>
                   <p className="comment-content">{comment.content}</p>
-                  <div className="comment-actions">
-                    <button className="button button--ghost" onClick={() => handleEdit(comment)}>Edit</button>
-                    <button className="button button--danger" onClick={() => handleDelete(comment.id)}>Delete</button>
-                  </div>
+                  {/* Edit/Delete appear only for the comment's author or an admin —
+                      matching what the backend actually permits. */}
+                  {canModify(comment) && (
+                    <div className="comment-actions">
+                      <button className="button button--ghost" onClick={() => handleEdit(comment)}>Edit</button>
+                      <button className="button button--danger" onClick={() => handleDelete(comment.id)}>Delete</button>
+                    </div>
+                  )}
                 </>
               )}
             </li>

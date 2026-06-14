@@ -71,17 +71,12 @@ if (import.meta.env.DEV) {
           : msg.sender_username || `User ${msg.sender_id}`;
 
         return (
+          // NOTE: inline colors removed — they overrode the theme variables and
+          // made text invisible in dark mode. Styling now comes from _messages.scss,
+          // which themes .sent / .received bubbles for both light and dark.
           <div
             key={msg.id}
             className={`conversation-message ${isSentByCurrentUser ? 'sent' : 'received'}`}
-            style={{
-              border: '1px solid',
-              borderColor: isSentByCurrentUser ? '#4caf50' : '#ccc',
-              backgroundColor: isSentByCurrentUser ? '#d1f7c4' : '#f1f1f1',
-              padding: '8px',
-              margin: '8px',
-              borderRadius: '8px',
-            }}
           >
             <div
               className={`message-bubble ${isSentByCurrentUser ? 'sent' : 'received'} ${

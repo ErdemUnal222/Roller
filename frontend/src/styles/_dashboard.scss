@@ -5,8 +5,8 @@
   max-width: 1200px;
   margin: 0 auto;
   font-family: 'Roboto', sans-serif;
-  color: #f9fafb;
-  background-color: #111827;
+  color: var(--text); /* fixed: was hardcoded #f9fafb (broke in light mode) */
+  background-color: var(--bg); /* fixed: was hardcoded #111827 (broke in light mode) */
 
   .dashboard-header {
     margin-bottom: 2rem;
@@ -16,12 +16,12 @@
       font-family: 'Poppins', sans-serif;
       font-size: 2rem;
       margin-bottom: 0.5rem;
-      color: #3b82f6; // blue-500
+      color: var(--accent); /* fixed: was hardcoded #3b82f6 */
     }
 
     .dashboard-welcome {
       font-size: 1rem;
-      color: #d1d5db; // gray-300
+      color: var(--text-muted); /* fixed: was hardcoded #d1d5db (invisible on light) */
     }
   }
 
@@ -39,34 +39,34 @@
   }
 
   .dashboard-card {
-  @include flex-center;
-  flex-direction: column;
-    background-color: #1f2937; // gray-800
-    border: 1px solid #374151;
+    @include flex-center;
+    flex-direction: column;
+    background-color: var(--card-2); /* fixed: was hardcoded #1f2937 */
+    border: 1px solid var(--border); /* fixed: was hardcoded #374151 */
     border-radius: 0.5rem;
     padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-1); /* fixed: was hardcoded rgba shadow */
     transition: transform 0.2s ease-in-out;
 
     &:hover,
     &:focus-within {
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3); // accent shadow
-      outline: 2px solid #3b82f6;
+      box-shadow: var(--shadow-2); /* fixed: was hardcoded accent shadow */
+      outline: 2px solid var(--accent); /* fixed: was hardcoded #3b82f6 */
       outline-offset: 2px;
     }
 
     .card-title {
       font-family: 'Poppins', sans-serif;
       font-size: 1.125rem;
-      color: #facc15; // yellow-400
+      color: var(--accent); /* fixed: was hardcoded #facc15 (low contrast on light) */
       margin-bottom: 0.5rem;
     }
 
     .card-value {
       font-size: 1.75rem;
       font-weight: bold;
-      color: #f9fafb;
+      color: var(--text); /* fixed: was hardcoded #f9fafb (invisible on light) */
     }
   }
 }

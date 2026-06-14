@@ -3,17 +3,18 @@
 /* --- Comment Section Wrapper --- */
 .comments-section {
   padding: 1rem;
-  color: var(--text-main);
+  color: var(--text); /* fixed: was var(--text-main) (undefined) */
 }
 
 .comments-title {
   font-size: 1.25rem;
   font-weight: bold;
   margin-bottom: 1rem;
+  color: var(--text);
 }
 
 .comments-error {
-  color: var(--error);
+  color: var(--danger); /* fixed: was var(--error) (undefined) */
   margin-bottom: 1rem;
 }
 
@@ -25,13 +26,13 @@
   gap: 0.75rem;
 
   .comment-input {
-    border: 1px solid var(--border-gray);
+    border: 1px solid var(--border); /* fixed: was var(--border-gray) */
     padding: 0.5rem;
     border-radius: 0.25rem;
     width: 100%;
     resize: vertical;
-    background-color: var(--bg-light);
-    color: var(--text-main);
+    background-color: var(--input-bg); /* fixed: was var(--bg-light) */
+    color: var(--input-text); /* fixed: was var(--text-main) */
 
     &::placeholder {
       color: var(--text-muted);
@@ -40,7 +41,7 @@
 
   .comment-button {
     background-color: var(--accent);
-    color: white;
+    color: var(--accent-contrast); /* fixed: was hardcoded white */
     padding: 0.5rem 1rem;
     border: none;
     border-radius: 0.25rem;
@@ -58,64 +59,65 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 /* --- Individual Comment --- */
 .comment-item {
-  border: 1px solid var(--border-gray);
+  border: 1px solid var(--border); /* fixed: was var(--border-gray) */
   padding: 0.75rem;
   border-radius: 0.25rem;
-  background-color: var(--bg-light);
-  color: var(--text-main);
+  background-color: var(--card-2); /* fixed: was var(--bg-light) */
+  color: var(--text); /* fixed: was var(--text-main) */
 
   .comment-author {
     font-weight: 500;
     margin-bottom: 0.25rem;
+    color: var(--text);
   }
 
   .comment-content {
     margin-top: 0.25rem;
     font-size: 0.95rem;
+    color: var(--text);
   }
 
   .comment-edit-input {
     width: 100%;
     padding: 0.5rem;
     margin-top: 0.5rem;
-    border: 1px solid var(--border-gray);
+    border: 1px solid var(--border); /* fixed: was var(--border-gray) */
     border-radius: 0.25rem;
-    background-color: var(--bg-light);
-    color: var(--text-main);
+    background-color: var(--input-bg); /* fixed: was var(--bg-light) */
+    color: var(--input-text); /* fixed: was var(--text-main) */
   }
 
   .comment-actions {
     margin-top: 0.5rem;
     display: flex;
+    flex-wrap: wrap; /* added: prevents buttons overlapping when narrow */
     gap: 0.5rem;
 
-    button {
-      padding: 0.25rem 0.75rem;
-      border: none;
-      border-radius: 0.25rem;
-      font-size: 0.875rem;
-      color: white;
-      cursor: pointer;
-    }
-
     .comment-edit {
-      background-color: var(--warning);
+      background-color: var(--accent); /* fixed: was var(--warning) */
+      color: var(--accent-contrast);
     }
 
     .comment-delete {
-      background-color: var(--error);
+      background-color: var(--danger); /* fixed: was var(--error) */
+      color: var(--accent-contrast);
     }
 
     .comment-save {
       background-color: var(--success);
+      color: var(--accent-contrast);
     }
 
     .comment-cancel {
       background-color: var(--text-muted);
+      color: var(--accent-contrast);
     }
   }
 }
