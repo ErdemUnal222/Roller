@@ -239,5 +239,5 @@
 /* Fallback hover if color-mix not supported */
 .button--ghost:hover,
 .navbar-link:hover {
-  background: rgba(37, 99, 235, 0.12);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }

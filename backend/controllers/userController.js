@@ -26,7 +26,20 @@ module.exports = (UsersModel) => {
 
       // Hash the password before saving it
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
-      const userData = { ...req.body, password: hashedPassword };
+      // SECURITY: build the user explicitly. Do NOT spread req.body — that let
+      // a client set `role: "admin"` at registration and self-escalate. Role is
+      // always 'user' on self-registration; admins are promoted server-side only.
+      const userData = {
+        firstName: req.body.firstName,
+        lastName:  req.body.lastName,
+        email:     req.body.email,
+        password:  hashedPassword,
+        address:   req.body.address,
+        zip:       req.body.zip,
+        city:      req.body.city,
+        phone:     req.body.phone,
+        role:      'user',
+      };
 
       // Save the new user to the database
       const result = await UsersModel.saveOneUser(userData);

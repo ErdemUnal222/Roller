@@ -398,8 +398,120 @@
   color: var(--text-muted);
 }
 
-.admin-loading {
-  padding: 2rem;
+/* ===== Messages Page Shell (MessagesPage.jsx uses .chat-* classes) =====
+   These classes had no CSS, leaving the messages page an unstyled shell
+   around themed bubbles. Styled here to match the rest of the app. */
+.chat-shell {
+  max-width: 960px;
+  margin: 1.5rem auto;
+  min-height: min(80vh, 1000px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+  color: var(--text);
+}
+
+.chat-header {
+  padding: var(--pad, 1rem);
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(0deg, transparent, color-mix(in srgb, var(--card) 85%, var(--text) 2%));
+
+  .chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+  }
+
+  .chat-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text);
+  }
+}
+
+.chat-back {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  padding: .35rem .6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+
+  &:hover { background: var(--card-2); }
+  &:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+}
+
+.chat-body {
+  padding: var(--pad, 1rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.chat-empty {
   text-align: center;
   color: var(--text-muted);
+  padding: 2rem 1rem;
+  font-size: .95rem;
+}
+
+.chat-banner {
+  padding: .75rem .9rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--text);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+
+  &.error {
+    border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+    background: color-mix(in srgb, var(--danger) 10%, var(--card-2));
+  }
+}
+
+.chat-input {
+  padding: var(--pad, 1rem);
+  border-top: 1px solid var(--border);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--card) 85%, var(--text) 2%));
+}
+
+/* Loading skeleton bubbles */
+.chat-skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.sk-row {
+  display: flex;
+
+  &.left  { justify-content: flex-start; }
+  &.right { justify-content: flex-end; }
+}
+
+.sk-bubble {
+  width: min(60%, 360px);
+  height: 2.5rem;
+  border-radius: 1rem;
+  background: linear-gradient(90deg,
+    var(--card-2),
+    color-mix(in srgb, var(--card-2) 70%, var(--text) 10%),
+    var(--card-2));
+  background-size: 200% 100%;
+  animation: chat-shimmer 1.3s linear infinite;
+}
+
+@keyframes chat-shimmer {
+  0%   { background-position: 0% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-bubble { animation: none; }
 }
