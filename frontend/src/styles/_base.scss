@@ -1,3 +1,11 @@
+/* Global box-sizing reset — makes width/height include padding & border.
+   Without this, width:100% + padding overflowed containers site-wide
+   (e.g. "View details" buttons spilling past event cards). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 /* /src/styles/_base.scss */
 
 body {
