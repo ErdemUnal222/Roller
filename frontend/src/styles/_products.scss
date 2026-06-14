@@ -1,5 +1,8 @@
+@use './variables' as *;
+
 .product-container {
   padding: 1.5rem;
+  color: var(--text);
 }
 
 .product-heading {
@@ -7,6 +10,7 @@
   font-weight: 600;
   margin-bottom: 1rem;
   text-align: center;
+  color: var(--text);
 }
 
 .product-form {
@@ -18,14 +22,16 @@
   input,
   textarea {
     padding: 0.75rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border); /* fixed: was #ccc */
     border-radius: 0.375rem;
     font-size: 1rem;
+    background-color: var(--input-bg); /* fixed: was transparent/white */
+    color: var(--input-text);
   }
 
   button {
-    background-color: #4f46e5;
-    color: white;
+    background-color: var(--accent); /* fixed: was #4f46e5 */
+    color: var(--accent-contrast);
     padding: 0.75rem;
     border: none;
     border-radius: 0.375rem;
@@ -34,7 +40,7 @@
     transition: background 0.2s;
 
     &:hover {
-      background-color: #4338ca;
+      background-color: var(--accent-hover); /* fixed: was #4338ca */
     }
   }
 }
@@ -43,10 +49,11 @@
   max-width: 640px;
   margin: 2rem auto;
   padding: 1.5rem;
-  background: #fff;
+  background: var(--card); /* fixed: was #fff */
+  color: var(--text);
   border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border); /* fixed: was #e5e7eb */
+  box-shadow: var(--shadow-1);
 }
 
 .edit-product-title {
@@ -54,6 +61,7 @@
   font-weight: 700;
   margin-bottom: 1.5rem;
   text-align: center;
+  color: var(--text);
 }
 
 .edit-product-form {
@@ -65,8 +73,10 @@
   textarea {
     padding: 0.75rem;
     font-size: 1rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border); /* fixed: was #d1d5db */
     border-radius: 0.375rem;
+    background-color: var(--input-bg);
+    color: var(--input-text);
   }
 
   textarea {
@@ -75,8 +85,8 @@
   }
 
   button {
-    background-color: #2563eb;
-    color: white;
+    background-color: var(--accent); /* fixed: was #2563eb */
+    color: var(--accent-contrast);
     font-weight: 600;
     padding: 0.75rem;
     border: none;
@@ -84,14 +94,14 @@
     cursor: pointer;
 
     &:hover {
-      background-color: #1d4ed8;
+      background-color: var(--accent-hover); /* fixed: was #1d4ed8 */
     }
   }
 }
 
 .form-error {
-  background-color: #fee2e2;
-  color: #b91c1c;
+  background-color: color-mix(in srgb, var(--danger) 12%, var(--card-2)); /* fixed: was #fee2e2 */
+  color: var(--danger); /* fixed: was #b91c1c */
   padding: 0.75rem;
   border-radius: 0.375rem;
   margin-bottom: 1rem;
@@ -101,12 +111,13 @@
 .form-loading {
   text-align: center;
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--text-muted); /* fixed: was #6b7280 */
   padding: 2rem 0;
 }
 
 .product-list-container {
   padding: 1rem;
+  color: var(--text);
 }
 
 .product-list-header {
@@ -120,11 +131,12 @@
 .product-list-title {
   font-size: 1.75rem;
   font-weight: 600;
+  color: var(--text);
 }
 
 .btn-add-product {
-  background-color: #10b981;
-  color: white;
+  background-color: var(--success); /* fixed: was #10b981 */
+  color: var(--accent-contrast);
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   font-weight: 600;
@@ -132,7 +144,7 @@
   transition: background 0.2s;
 
   &:hover {
-    background-color: #059669;
+    background-color: var(--success-hover); /* fixed: was #059669 */
   }
 }
 
@@ -151,15 +163,16 @@
 }
 
 .product-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--card); /* fixed: was #fff */
+  color: var(--text);
+  border: 1px solid var(--border); /* fixed: was #e5e7eb */
   border-radius: 0.5rem;
   padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-1);
   transition: box-shadow 0.2s;
 
   &:hover {
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-2);
   }
 }
 
@@ -175,34 +188,37 @@
   font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
+  color: var(--text);
 }
 
 .product-description {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-muted); /* fixed: was #6b7280 */
   margin-bottom: 0.5rem;
 }
 
 .product-price {
   font-weight: 700;
-  color: #1e40af;
+  color: var(--accent); /* fixed: was #1e40af (low contrast on dark) */
 }
 
 .product-detail-container {
   max-width: 700px;
   margin: 2rem auto;
   padding: 1.5rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--card); /* fixed: was #fff */
+  color: var(--text); /* fixed: text was invisible (white-on-white) */
+  border: 1px solid var(--border); /* fixed: was #e5e7eb */
   border-radius: 0.5rem;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-1);
 }
 
 .product-detail-title {
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 1rem;
+  color: var(--text); /* added: was invisible on white card */
 }
 
 .product-detail-image {
@@ -215,7 +231,7 @@
 
 .product-detail-description {
   font-size: 1rem;
-  color: #4b5563;
+  color: var(--text-muted); /* fixed: was #4b5563 */
   margin-bottom: 1rem;
 }
 
@@ -224,11 +240,17 @@
   font-size: 1.1rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
+  color: var(--text); /* added: was invisible on white card */
+}
+
+.product-detail-date {
+  color: var(--text-muted); /* added: keep meta text readable */
+  margin-bottom: 0.5rem;
 }
 
 .product-detail-button {
-  background-color: #10b981;
-  color: white;
+  background-color: var(--success); /* fixed: was #10b981 */
+  color: var(--accent-contrast);
   padding: 0.75rem 1.25rem;
   border: none;
   border-radius: 0.375rem;
@@ -237,6 +259,6 @@
   transition: background 0.2s;
 
   &:hover {
-    background-color: #059669;
+    background-color: var(--success-hover); /* fixed: was #059669 */
   }
 }
